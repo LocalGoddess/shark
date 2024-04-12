@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "crates/sharkc",
+    "crates/shark-lex"
+]
+resolver = "2"
