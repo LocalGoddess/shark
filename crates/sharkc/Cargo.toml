@@ -1,0 +1,9 @@
+[package]
+name = "sharkc"
+version.workspace = true
+edition = "2021"
+
+
+[dependencies]
+
+
