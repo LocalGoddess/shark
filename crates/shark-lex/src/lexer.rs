@@ -72,10 +72,11 @@ impl<'a> Lexer<'a> {
             if self.expected_token.is_none() {
                 self.find_new_token(c, &mut tokens);
             } else {
-                self.continue_token(c);
+                self.continue_token(c, &mut tokens);
             }
 
             self.position += 1;
+            self.working_row_col = (self.working_row_col.0 + 1, self.working_row_col.1);
         }
 
         tokens
@@ -87,6 +88,7 @@ impl<'a> Lexer<'a> {
             self.expected_token = Some(TokenKind::Identifier(self.working_content.to_string()));
 
             self.finish_token(tokens);
+            return;
         }
 
         if c.is_ascii_digit() {
@@ -94,9 +96,31 @@ impl<'a> Lexer<'a> {
             self.expected_token = Some(TokenKind::Literal(LiteralKind::Int(-1)));
 
             self.finish_token(tokens);
+
+            return;
         }
 
         match c {
+
+            '"' => {
+                self.expected_token = Some(TokenKind::Literal(LiteralKind::Str(String::new())));
+                self.should_finish();
+            }
+
+            '\'' => {
+                let mut cloned = self.characters.clone();
+                let _ = cloned.next();
+                if let Some(peek) = cloned.next() {
+                    if peek == ',' || peek == ' ' { // <'a, 'b, 'c, 'd> // ' '
+                        self.push_single_char_token(TokenKind::Apostrophe, tokens);
+                        return;
+                    }
+                }
+                
+                self.expected_token = Some(TokenKind::Literal(LiteralKind::Char(String::new())));
+                self.finish_token(tokens);
+            }
+
             '\n' => {
                 self.working_row_col = (0, self.working_row_col.1 + 1);
             }
@@ -155,10 +179,6 @@ impl<'a> Lexer<'a> {
                 self.push_single_char_token(TokenKind::Colon, tokens);
             }
 
-            '\'' => {
-                todo!("This has to be done once I lex chars");
-            }
-
             '_' => {
                 self.push_single_char_token(TokenKind::UnderScore, tokens);
             }
@@ -205,7 +225,10 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn continue_token(&mut self, _c: char) {}
+    pub fn continue_token(&mut self, c: char, tokens: &mut Vec<LexerToken>) {
+        self.working_content.push(c);
+        self.finish_token(tokens);
+    }
 
     // Maybe this needs a refactor
     fn should_finish(&mut self) -> bool {
@@ -355,4 +378,9 @@ pub fn deduce_numeric_type(content: &str) -> LiteralKind {
         todo!("Error here")
     }
     LiteralKind::Int(result.unwrap())
+}
+
+pub fn verify_char_content(_content: &str) {
+    todo!("Verify the contents of char contents. For example you can't have a char that is 'ab', but you can have a char that is '\\u0040'. 
+          IDK if/what this should return but I'll figure that out later. This will probably go back into the error system");
 }
