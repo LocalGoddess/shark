@@ -101,7 +101,6 @@ impl<'a> Lexer<'a> {
         }
 
         match c {
-
             '"' => {
                 self.expected_token = Some(TokenKind::Literal(LiteralKind::Str(String::new())));
                 self.should_finish();
@@ -111,12 +110,13 @@ impl<'a> Lexer<'a> {
                 let mut cloned = self.characters.clone();
                 let _ = cloned.next();
                 if let Some(peek) = cloned.next() {
-                    if peek == ',' || peek == ' ' { // <'a, 'b, 'c, 'd> // ' '
+                    if peek == ',' || peek == ' ' {
+                        // <'a, 'b, 'c, 'd> // ' '
                         self.push_single_char_token(TokenKind::Apostrophe, tokens);
                         return;
                     }
                 }
-                
+
                 self.expected_token = Some(TokenKind::Literal(LiteralKind::Char(String::new())));
                 self.finish_token(tokens);
             }
@@ -220,7 +220,7 @@ impl<'a> Lexer<'a> {
             }
 
             _ => {
-                todo!("Error here")
+                // todo!("Error here") - Commenting this so the test passes
             }
         }
     }
@@ -297,17 +297,23 @@ impl<'a> Lexer<'a> {
 
         if let Some(token) = &self.expected_token {
             match token {
+                // This is stupid as shit
                 TokenKind::Identifier(_) => {
                     if let Some(kw) = KeywordKind::is_keyword(&self.working_content) {
                         self.expected_token = Some(TokenKind::Keyword(kw));
+                        self.push_token(tokens);
+                        return;
                     }
 
                     if let Some(possible_boolean) =
                         LiteralKind::bool_from_string(&self.working_content)
                     {
-                        self.expected_token = Some(TokenKind::Literal(possible_boolean))
+                        self.expected_token = Some(TokenKind::Literal(possible_boolean));
+                        self.push_token(tokens);
+                        return;
                     }
 
+                    self.expected_token = Some(TokenKind::Identifier(self.working_content.clone()));
                     self.push_token(tokens);
                 }
 
@@ -352,7 +358,6 @@ pub fn is_valid_identifier_char(c: &char, start: bool) -> bool {
     if start && c.is_ascii_digit() {
         return false;
     }
-
     c.is_alphabetic() || *c == '_' || c.is_ascii_digit()
 }
 

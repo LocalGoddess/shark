@@ -1,5 +1,8 @@
 pub mod lexer;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Debug, Clone)]
 pub struct LexerToken {
     pub kind: TokenKind,
@@ -20,7 +23,7 @@ impl LexerToken {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
     Identifier(String),
     Keyword(KeywordKind),
@@ -49,7 +52,7 @@ pub enum TokenKind {
     EOL, // ;
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum KeywordKind {
     Else,
     Enum,
@@ -90,7 +93,7 @@ impl KeywordKind {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum LiteralKind {
     Str(String),
     Int(i32),
