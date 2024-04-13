@@ -178,6 +178,14 @@ impl<'a> Lexer<'a> {
             }
 
             '.' => {
+                if let Some(peeked) = self.peek() {
+                    if peeked.is_ascii_digit() {
+                        self.working_row_col = self.current_row_col;
+                        self.working_content.push(&peeked);
+                        self.expected_token(TokenKind::Literal(LiteralKind::Int(-1)));
+                        return;
+                    }
+                }
                 self.push_single_char_token(TokenKind::Dot, tokens);
             }
 
