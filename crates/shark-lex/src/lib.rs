@@ -91,15 +91,15 @@ impl KeywordKind {
 }
 
 #[derive(Debug, Clone)]
-pub enum LiteralKind<'a> {
-    Str(&'a str),
+pub enum LiteralKind {
+    Str(String),
     Int(i32),
     Boolean(bool),
     Float(f32),
-    Char(&'a str),
+    Char(String),
 }
 
-impl<'a> LiteralKind<'a> {
+impl LiteralKind {
     pub fn bool_from_string(string: &str) -> Option<Self> {
         match string {
             "true" => Some(LiteralKind::Boolean(true)),

@@ -78,7 +78,7 @@ impl<'a> Lexer<'a> {
             self.finish_token(tokens);
         }
 
-        if c.is_numeric() {
+        if c.is_ascii_digit() {
             self.working_content.push(c);
             self.expected_token = Some(TokenKind::Literal(LiteralKind::Int(-1)));
 
@@ -151,7 +151,7 @@ impl<'a> Lexer<'a> {
             return;
         }
 
-        if let Some(token) = self.expected_token {
+        if let Some(token) = &self.expected_token {
             match token {
                 TokenKind::Identifier(_) => {
                     if let Some(kw) = KeywordKind::is_keyword(&self.working_content) {
@@ -177,44 +177,51 @@ impl<'a> Lexer<'a> {
                         }
 
                         LiteralKind::Str(_) => {
-                            self.expected_token =
-                                Some(TokenKind::Literal(LiteralKind::Str(&self.working_content)));
+                            self.expected_token = Some(TokenKind::Literal(LiteralKind::Str(
+                                self.working_content.clone(),
+                            )));
                             self.push_token(tokens);
                         }
 
                         LiteralKind::Char(_) => {
-                            self.expected_token =
-                                Some(TokenKind::Literal(LiteralKind::Char(&self.working_content)));
+                            self.expected_token = Some(TokenKind::Literal(LiteralKind::Char(
+                                self.working_content.clone(),
+                            )));
                             self.push_token(tokens);
                         }
 
                         _ => {
                             // Unreachable
-                            return;
                         }
                     }
                 }
 
                 _ => {
                     // Unreachable
-                    return;
                 }
             }
         }
     }
 }
 
-pub fn is_valid_identifier_char(_c: &char, _start: bool) -> bool {
-    todo!("Finish this");
+pub fn is_valid_identifier_char(c: &char, start: bool) -> bool {
+    if start && c.is_ascii_digit() {
+        return false;
+    }
+
+    c.is_alphabetic() || *c == '_' || c.is_ascii_digit()
 }
 
-pub fn is_valid_number_char(_c: &char) -> bool {
-    todo!("Finish this")
+pub fn is_valid_number_char(c: &char) -> bool {
+    if c.is_ascii_digit() {
+        return true;
+    }
+    matches!(c, '_' | '.' | 'x' | 'a'..='f' | 'A'..='F')
 }
 
 // TODO(Chloe): Improve this when I make the error system
 pub fn deduce_numeric_type(content: &str) -> LiteralKind {
-    if content.contains(".") {
+    if content.contains('.') {
         let result = content.parse::<f32>();
         if result.is_err() {
             todo!("Error here")
