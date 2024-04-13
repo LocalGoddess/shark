@@ -7,9 +7,10 @@ pub struct Lexer<'a> {
     length: usize,
 
     expected_token: Option<TokenKind>,
-    working_row_col: (usize, usize),
     working_content: String,
+    working_row_col: (usize, usize),
 
+    current_row_col: (usize, usize),
     characters: Chars<'a>,
 }
 
@@ -19,8 +20,9 @@ impl<'a> Lexer<'a> {
             position: 0,
             length: source.len(),
             expected_token: None,
-            working_row_col: (1, 1),
             working_content: String::new(),
+            working_row_col: (1, 1),
+            current_row_col: (1, 1),
             characters: source.chars(),
         }
     }
@@ -49,8 +51,8 @@ impl<'a> Lexer<'a> {
     pub fn push_single_char_token(&mut self, kind: TokenKind, tokens: &mut Vec<LexerToken>) {
         tokens.push(LexerToken::new(
             kind,
-            self.working_row_col.0,
-            self.working_row_col.1,
+            self.current_row_col.0,
+            self.current_row_col.1,
             1,
         ));
         self.reset_token();
@@ -76,7 +78,7 @@ impl<'a> Lexer<'a> {
             }
 
             self.position += 1;
-            self.working_row_col = (self.working_row_col.0, self.working_row_col.1 + 1);
+            self.current_row_col = (self.current_row_col.0, self.current_row_col.1 + 1);
         }
 
         tokens
@@ -86,6 +88,7 @@ impl<'a> Lexer<'a> {
         if is_valid_identifier_char(&c, true) {
             self.working_content.push(c);
             self.expected_token = Some(TokenKind::Identifier(self.working_content.to_string()));
+            self.working_row_col = self.current_row_col;
 
             self.finish_token(tokens);
             return;
@@ -94,6 +97,7 @@ impl<'a> Lexer<'a> {
         if c.is_ascii_digit() {
             self.working_content.push(c);
             self.expected_token = Some(TokenKind::Literal(LiteralKind::Int(-1)));
+            self.working_row_col = self.current_row_col;
 
             self.finish_token(tokens);
 
@@ -103,6 +107,7 @@ impl<'a> Lexer<'a> {
         match c {
             '"' => {
                 self.expected_token = Some(TokenKind::Literal(LiteralKind::Str(String::new())));
+                self.working_row_col = self.current_row_col;
                 self.should_finish();
             }
 
@@ -116,13 +121,13 @@ impl<'a> Lexer<'a> {
                         return;
                     }
                 }
-
+                self.working_row_col = self.current_row_col;
                 self.expected_token = Some(TokenKind::Literal(LiteralKind::Char(String::new())));
                 self.finish_token(tokens);
             }
 
             '\n' => {
-                self.working_row_col = (self.working_row_col.0 + 1, 1);
+                self.current_row_col = (self.current_row_col.0 + 1, 1);
             }
 
             '+' => {
@@ -134,6 +139,7 @@ impl<'a> Lexer<'a> {
                 // looks better anyway
                 if let Some(peeked) = self.peek() {
                     if peeked.is_ascii_digit() {
+                        self.working_row_col = self.current_row_col;
                         self.working_content.push(c);
                         self.expected_token = Some(TokenKind::Literal(LiteralKind::Int(-1)));
                         return;
