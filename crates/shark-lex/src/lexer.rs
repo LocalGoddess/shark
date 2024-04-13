@@ -181,8 +181,8 @@ impl<'a> Lexer<'a> {
                 if let Some(peeked) = self.peek() {
                     if peeked.is_ascii_digit() {
                         self.working_row_col = self.current_row_col;
-                        self.working_content.push(&peeked);
-                        self.expected_token(TokenKind::Literal(LiteralKind::Int(-1)));
+                        self.working_content.push(peeked);
+                        self.expected_token = Some(TokenKind::Literal(LiteralKind::Int(-1)));
                         return;
                     }
                 }
@@ -368,14 +368,14 @@ impl<'a> Lexer<'a> {
     }
 }
 
-pub fn is_valid_identifier_char(c: &char, start: bool) -> bool {
+fn is_valid_identifier_char(c: &char, start: bool) -> bool {
     if start && c.is_ascii_digit() {
         return false;
     }
     c.is_alphabetic() || *c == '_' || c.is_ascii_digit()
 }
 
-pub fn is_valid_number_char(c: &char) -> bool {
+fn is_valid_number_char(c: &char) -> bool {
     if c.is_ascii_digit() {
         return true;
     }
@@ -383,7 +383,7 @@ pub fn is_valid_number_char(c: &char) -> bool {
 }
 
 // TODO(Chloe): Improve this when I make the error system
-pub fn deduce_numeric_type(content: &str) -> LiteralKind {
+fn deduce_numeric_type(content: &str) -> LiteralKind {
     if content.contains('.') {
         let result = content.parse::<f32>();
         if result.is_err() {
@@ -399,7 +399,7 @@ pub fn deduce_numeric_type(content: &str) -> LiteralKind {
     LiteralKind::Int(result.unwrap())
 }
 
-pub fn verify_char_content(_content: &str) {
+fn _verify_char_content(_content: &str) {
     todo!("Verify the contents of char contents. For example you can't have a char that is 'ab', but you can have a char that is '\\u0040'. 
           IDK if/what this should return but I'll figure that out later. This will probably go back into the error system");
 }

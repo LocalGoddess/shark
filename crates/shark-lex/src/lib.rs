@@ -48,11 +48,11 @@ pub enum TokenKind {
     CurlyBrace { opened: bool },    // { }
     SquareBracket { opened: bool }, // [ ]
     Parenthesis { opened: bool },   // ( )
-
-    EOL, // ;
+                                        
+    EOL,                            // ;
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum KeywordKind {
     Else,
     Enum,
