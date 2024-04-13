@@ -19,7 +19,7 @@ impl<'a> Lexer<'a> {
             position: 0,
             length: source.len(),
             expected_token: None,
-            working_row_col: (0, 0),
+            working_row_col: (1, 1),
             working_content: String::new(),
             characters: source.chars(),
         }
@@ -76,7 +76,7 @@ impl<'a> Lexer<'a> {
             }
 
             self.position += 1;
-            self.working_row_col = (self.working_row_col.0 + 1, self.working_row_col.1);
+            self.working_row_col = (self.working_row_col.0, self.working_row_col.1 + 1);
         }
 
         tokens
@@ -122,7 +122,7 @@ impl<'a> Lexer<'a> {
             }
 
             '\n' => {
-                self.working_row_col = (0, self.working_row_col.1 + 1);
+                self.working_row_col = (self.working_row_col.0 + 1, 1);
             }
 
             '+' => {
