@@ -245,6 +245,7 @@ impl<'a> Lexer<'a> {
 
                 LiteralKind::Str(_) => {
                     if peeked == '"' {
+                        let _ = self.characters.next(); // We don't want to check this on the next run
                         return true;
                     }
                     false
@@ -252,6 +253,7 @@ impl<'a> Lexer<'a> {
 
                 LiteralKind::Char(_) => {
                     if peeked == '\'' {
+                        let _ = self.characters.next(); // We don't want to check this on the next run
                         return true;
                     }
                     false
