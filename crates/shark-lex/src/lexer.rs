@@ -30,7 +30,7 @@ impl<'a> Lexer<'a> {
         String::clear(&mut self.working_content);
     }
 
-    pub fn push_token(&self, tokens: &mut Vec<LexerToken>) {
+    pub fn push_token(&mut self, tokens: &mut Vec<LexerToken>) {
         if self.expected_token.is_none() {
             todo!("Error here");
         }
@@ -43,6 +43,17 @@ impl<'a> Lexer<'a> {
             self.working_row_col.1,
             self.working_content.len(),
         ));
+        self.reset_token();
+    }
+
+    pub fn push_single_char_token(&mut self, kind: TokenKind, tokens: &mut Vec<LexerToken>) {
+        tokens.push(LexerToken::new(
+            kind,
+            self.working_row_col.0,
+            self.working_row_col.1,
+            1,
+        ));
+        self.reset_token();
     }
 
     pub fn peek(&self) -> Option<char> {
@@ -83,6 +94,114 @@ impl<'a> Lexer<'a> {
             self.expected_token = Some(TokenKind::Literal(LiteralKind::Int(-1)));
 
             self.finish_token(tokens);
+        }
+
+        match c {
+            '\n' => {
+                self.working_row_col = (0, self.working_row_col.1 + 1);
+            }
+
+            '+' => {
+                self.push_single_char_token(TokenKind::Plus, tokens);
+            }
+
+            '-' => {
+                // Note this won't allow the use of -.2. Instead, it will need to be -0.2 which
+                // looks better anyway
+                if let Some(peeked) = self.peek() {
+                    if peeked.is_ascii_digit() {
+                        self.working_content.push(c);
+                        self.expected_token = Some(TokenKind::Literal(LiteralKind::Int(-1)));
+                        return;
+                    }
+                }
+
+                self.push_single_char_token(TokenKind::Minus, tokens);
+            }
+
+            '=' => {
+                self.push_single_char_token(TokenKind::Equal, tokens);
+            }
+
+            '*' => {
+                self.push_single_char_token(TokenKind::Astrisk, tokens);
+            }
+
+            '/' => {
+                self.push_single_char_token(TokenKind::Slash, tokens);
+            }
+
+            '&' => {
+                self.push_single_char_token(TokenKind::Ampersand, tokens);
+            }
+
+            '|' => {
+                self.push_single_char_token(TokenKind::Pipe, tokens);
+            }
+
+            '!' => {
+                self.push_single_char_token(TokenKind::Bang, tokens);
+            }
+
+            '^' => {
+                self.push_single_char_token(TokenKind::Caret, tokens);
+            }
+
+            '.' => {
+                self.push_single_char_token(TokenKind::Dot, tokens);
+            }
+
+            ':' => {
+                self.push_single_char_token(TokenKind::Colon, tokens);
+            }
+
+            '\'' => {
+                todo!("This has to be done once I lex chars");
+            }
+
+            '_' => {
+                self.push_single_char_token(TokenKind::UnderScore, tokens);
+            }
+
+            '<' => {
+                self.push_single_char_token(TokenKind::AngleBracket { opened: true }, tokens);
+            }
+
+            '>' => {
+                self.push_single_char_token(TokenKind::AngleBracket { opened: false }, tokens);
+            }
+
+            '{' => {
+                self.push_single_char_token(TokenKind::CurlyBrace { opened: true }, tokens);
+            }
+
+            '}' => {
+                self.push_single_char_token(TokenKind::CurlyBrace { opened: false }, tokens);
+            }
+
+            '[' => {
+                self.push_single_char_token(TokenKind::SquareBracket { opened: true }, tokens);
+            }
+
+            ']' => {
+                self.push_single_char_token(TokenKind::SquareBracket { opened: false }, tokens);
+            }
+
+            '(' => {
+                self.push_single_char_token(TokenKind::Parenthesis { opened: true }, tokens);
+            }
+
+            ')' => {
+                self.push_single_char_token(TokenKind::Parenthesis { opened: false }, tokens);
+            }
+
+            ';' => {
+                self.push_single_char_token(TokenKind::EOL, tokens);
+            }
+
+            _ => {
+                todo!("Error here")
+            }
         }
     }
 
