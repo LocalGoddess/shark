@@ -107,7 +107,7 @@ fn test_single_char_token() {
 }
 
 #[test]
-fn big_test() {
+fn test_big() {
     let mut lexer = Lexer::new("pub fun main() {\n    let a :: Float32 = 3.14;\n}");
     let tokens = lexer.lex();
 
