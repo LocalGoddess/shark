@@ -9,6 +9,9 @@ version = "0.0.0"
 [[package]]
 name = "shark-lex"
 version = "0.0.0"
+dependencies = [
+ "shark-error",
+]
 
 [[package]]
 name = "sharkc"

@@ -3,4 +3,5 @@ name = "shark-lex"
 version = "0.0.0"
 edition = "2021"
 
-
+[dependencies]
+shark-error = { path = "../shark-error" }

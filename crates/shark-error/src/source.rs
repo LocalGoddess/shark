@@ -1,6 +1,6 @@
 use std::path::Path;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SourcePosition<'a> {
     pub origin: Option<&'a Path>,
     pub row: usize,

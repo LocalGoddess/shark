@@ -1,4 +1,6 @@
-use std::str::Chars;
+use std::{str::Chars, path::Path};
+
+use shark_error::source::SourcePosition;
 
 use crate::{KeywordKind, LexerToken, LiteralKind, TokenKind};
 
@@ -8,21 +10,21 @@ pub struct Lexer<'a> {
 
     expected_token: Option<TokenKind>,
     working_content: String,
-    working_row_col: (usize, usize),
+    working_position: SourcePosition<'a>,
 
-    current_row_col: (usize, usize),
+    current_position: SourcePosition<'a>,
     characters: Chars<'a>,
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(source: &'a str) -> Self {
+    pub fn new(source_origin: Option<&'a Path>, source: &'a str) -> Self {
         Self {
             position: 0,
             length: source.len(),
             expected_token: None,
             working_content: String::new(),
-            working_row_col: (1, 1),
-            current_row_col: (1, 1),
+            working_position: SourcePosition::new(source_origin, 1, 1),
+            current_position: SourcePosition::new(source_origin, 1, 1),
             characters: source.chars(),
         }
     }
@@ -32,7 +34,7 @@ impl<'a> Lexer<'a> {
         String::clear(&mut self.working_content);
     }
 
-    pub fn push_token(&mut self, tokens: &mut Vec<LexerToken>) {
+    pub fn push_token(&mut self, tokens: &mut Vec<LexerToken<'a>>) {
         if self.expected_token.is_none() {
             todo!("Error here");
         }
@@ -41,18 +43,16 @@ impl<'a> Lexer<'a> {
             self.expected_token
                 .clone()
                 .expect("Failed to get expected token type"),
-            self.working_row_col.0,
-            self.working_row_col.1,
+                 self.working_position,
             self.working_content.len(),
         ));
         self.reset_token();
     }
 
-    pub fn push_single_char_token(&mut self, kind: TokenKind, tokens: &mut Vec<LexerToken>) {
+    pub fn push_single_char_token(&mut self, kind: TokenKind, tokens: &mut Vec<LexerToken<'a>>) {
         tokens.push(LexerToken::new(
             kind,
-            self.current_row_col.0,
-            self.current_row_col.1,
+           self.current_position,
             1,
         ));
         self.reset_token();
@@ -78,17 +78,17 @@ impl<'a> Lexer<'a> {
             }
 
             self.position += 1;
-            self.current_row_col = (self.current_row_col.0, self.current_row_col.1 + 1);
+            self.current_position.next();
         }
 
         tokens
     }
 
-    pub fn find_new_token(&mut self, c: char, tokens: &mut Vec<LexerToken>) {
+    pub fn find_new_token(&mut self, c: char, tokens: &mut Vec<LexerToken<'a>>) {
         if is_valid_identifier_char(&c, true) {
             self.working_content.push(c);
             self.expected_token = Some(TokenKind::Identifier(self.working_content.to_string()));
-            self.working_row_col = self.current_row_col;
+            self.working_position = self.current_position;
 
             self.finish_token(tokens);
             return;
@@ -97,7 +97,7 @@ impl<'a> Lexer<'a> {
         if c.is_ascii_digit() {
             self.working_content.push(c);
             self.expected_token = Some(TokenKind::Literal(LiteralKind::Int(-1)));
-            self.working_row_col = self.current_row_col;
+            self.working_position = self.current_position;
 
             self.finish_token(tokens);
 
@@ -107,7 +107,7 @@ impl<'a> Lexer<'a> {
         match c {
             '"' => {
                 self.expected_token = Some(TokenKind::Literal(LiteralKind::Str(String::new())));
-                self.working_row_col = self.current_row_col;
+                self.working_position = self.current_position;
                 self.should_finish();
             }
 
@@ -121,13 +121,13 @@ impl<'a> Lexer<'a> {
                         return;
                     }
                 }
-                self.working_row_col = self.current_row_col;
+                self.working_position = self.current_position;
                 self.expected_token = Some(TokenKind::Literal(LiteralKind::Char(String::new())));
                 self.finish_token(tokens);
             }
 
             '\n' => {
-                self.current_row_col = (self.current_row_col.0 + 1, 1);
+                self.current_position.newline();
             }
 
             '+' => {
@@ -139,7 +139,7 @@ impl<'a> Lexer<'a> {
                 // looks better anyway
                 if let Some(peeked) = self.peek() {
                     if peeked.is_ascii_digit() {
-                        self.working_row_col = self.current_row_col;
+                        self.working_position = self.current_position;
                         self.working_content.push(c);
                         self.expected_token = Some(TokenKind::Literal(LiteralKind::Int(-1)));
                         return;
@@ -180,7 +180,7 @@ impl<'a> Lexer<'a> {
             '.' => {
                 if let Some(peeked) = self.peek() {
                     if peeked.is_ascii_digit() {
-                        self.working_row_col = self.current_row_col;
+                        self.working_position = self.current_position;
                         self.working_content.push(peeked);
                         self.expected_token = Some(TokenKind::Literal(LiteralKind::Int(-1)));
                         return;
@@ -239,7 +239,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn continue_token(&mut self, c: char, tokens: &mut Vec<LexerToken>) {
+    pub fn continue_token(&mut self, c: char, tokens: &mut Vec<LexerToken<'a>>) {
         self.working_content.push(c);
         self.finish_token(tokens);
     }
@@ -304,7 +304,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Finishes a token if it should be.
-    pub fn finish_token(&mut self, tokens: &mut Vec<LexerToken>) {
+    pub fn finish_token(&mut self, tokens: &mut Vec<LexerToken<'a>>) {
         if !self.should_finish() {
             return;
         }
