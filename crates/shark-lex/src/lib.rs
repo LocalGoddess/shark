@@ -8,7 +8,7 @@ mod tests;
 #[derive(Debug, Clone)]
 pub struct LexerToken<'a> {
     pub kind: TokenKind,
-    
+
     pub position: SourcePosition<'a>,
     pub length: usize,
 }

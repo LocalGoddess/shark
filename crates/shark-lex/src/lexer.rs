@@ -1,4 +1,4 @@
-use std::{str::Chars, path::Path};
+use std::{path::Path, str::Chars};
 
 use shark_error::source::SourcePosition;
 
@@ -43,18 +43,14 @@ impl<'a> Lexer<'a> {
             self.expected_token
                 .clone()
                 .expect("Failed to get expected token type"),
-                 self.working_position,
+            self.working_position,
             self.working_content.len(),
         ));
         self.reset_token();
     }
 
     pub fn push_single_char_token(&mut self, kind: TokenKind, tokens: &mut Vec<LexerToken<'a>>) {
-        tokens.push(LexerToken::new(
-            kind,
-           self.current_position,
-            1,
-        ));
+        tokens.push(LexerToken::new(kind, self.current_position, 1));
         self.reset_token();
     }
 
