@@ -12,7 +12,7 @@ impl<'a> SourcePosition<'a> {
         Self {
             origin: origin_file,
             row,
-            column
+            column,
         }
     }
 
@@ -26,12 +26,17 @@ impl<'a> SourcePosition<'a> {
         self.row += 1;
         self.column = 1;
     }
-    
+
     pub fn stringify(&self) -> String {
-        if self.origin == None {
-            return format!("unknown@{}:{}", self.row, self.column);
+        if self.origin.is_none() {
+            return format!("unknown:{}:{}", self.row, self.column);
         }
-        format!("{}:{}:{}", self.origin.unwrap().display(), self.row, self.column)
+        format!(
+            "{}:{}:{}",
+            self.origin.unwrap().display(),
+            self.row,
+            self.column
+        )
     }
 }
 
@@ -45,18 +50,18 @@ impl<'a> PartialOrd for SourcePosition<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         if self.row == other.row {
             if self.column == other.column {
-                return Some(std::cmp::Ordering::Equal)
+                return Some(std::cmp::Ordering::Equal);
             }
 
             if self.column > other.column {
-                return Some(std::cmp::Ordering::Greater)
+                return Some(std::cmp::Ordering::Greater);
             }
         }
-        
+
         if self.row > other.row {
-            return Some(std::cmp::Ordering::Greater)
+            return Some(std::cmp::Ordering::Greater);
         }
 
-        return Some(std::cmp::Ordering::Less)
+        Some(std::cmp::Ordering::Less)
     }
 }
