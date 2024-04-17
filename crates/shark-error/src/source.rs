@@ -117,7 +117,7 @@ impl<'a> SharkSnippet<'a> {
             None => String::new(),
         };
         let line_data = format!(
-            "\n  | {}{} {}",
+            "\n  | {}\x1b[38;2;235;94;94m{} {}\x1b[0m",
             " ".repeat(start_position.column - 1),
             "^".repeat(underline_length),
             raw_message

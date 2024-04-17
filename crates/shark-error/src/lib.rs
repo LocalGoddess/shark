@@ -1,39 +1,34 @@
-use std::ops::Range;
-
-use source::SourcePosition;
+use source::SharkSnippet;
 
 pub mod source;
 
 pub struct SharkError<'a> {
     pub kind: SharkErrorKind,
-    pub position: Range<SourcePosition<'a>>,
+    pub snippet: SharkSnippet<'a>,
 
     pub message: &'a str,
-    pub help: Option<&'a str>,
 }
 
 impl<'a> SharkError<'a> {
-    pub fn new(
-        kind: SharkErrorKind,
-        position: Range<SourcePosition<'a>>,
-        message: &'a str,
-        help: Option<&'a str>,
-    ) -> Self {
+    pub fn new(kind: SharkErrorKind, snippet: SharkSnippet<'a>, message: &'a str) -> Self {
         Self {
             kind,
-            position,
+            snippet,
             message,
-            help,
         }
     }
 
     pub fn get_header(&self) -> String {
         format!(
-            "{} : \x1b[38;2;255;255;255m{}\x1b[0m\n found at: {}\n\n\n\n\n",
+            "{} : \x1b[38;2;255;255;255m{}\n found at: {}\x1b[0m",
             self.kind.prefix(),
             self.message,
-            self.position.start.stringify()
+            self.snippet.start_position.stringify()
         )
+    }
+
+    pub fn get_error(&mut self) -> String {
+        format!("{}\n{}", self.get_header(), self.snippet.snippet)
     }
 }
 
