@@ -2,7 +2,7 @@ use std::{fmt::Display, path::Path};
 
 /// Represents a position inside of a file. If file is of type `None`,
 /// then this will just represent a line and column in any file.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct SourcePosition<'a> {
     pub file: Option<&'a Path>,
     pub line: usize,
@@ -21,6 +21,7 @@ impl<'a> SourcePosition<'a> {
         false
     }
 
+    /// Ensures that these [`SourcePosition`]'s are of the same file
     fn ensure_similar(&self, other: &Self) -> bool {
         if self.file.is_some() && other.file.is_some() {
             return self.file == other.file;
@@ -40,5 +41,23 @@ impl<'a> Display for SourcePosition<'a> {
             "unknown"
         };
         write!(f, "{}:{}:{}", path_str, self.line, self.column)
+    }
+}
+
+impl<'a> PartialOrd for SourcePosition<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        if !self.ensure_similar(other) {
+            return None;
+        }
+
+        if self.line == other.line {
+            return Some(std::cmp::Ordering::Equal);
+        }
+
+        if self.line >= other.line {
+            return Some(std::cmp::Ordering::Greater);
+        }
+
+        Some(std::cmp::Ordering::Less)
     }
 }
