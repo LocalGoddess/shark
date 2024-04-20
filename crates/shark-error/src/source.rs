@@ -32,7 +32,9 @@ impl<'a> SourcePosition<'a> {
 
 impl<'a> Display for SourcePosition<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let path_str: &str = self.file.as_ref()
+        let path_str: &str = self
+            .file
+            .as_ref()
             .and_then(|x| x.to_str())
             .map_or_else(|| "unknown", |x| x);
         write!(f, "{}:{}:{}", path_str, self.line, self.column)

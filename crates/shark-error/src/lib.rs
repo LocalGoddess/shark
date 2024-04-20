@@ -32,17 +32,22 @@ impl<'a> SharkError<'a> {
     pub fn supply_help(&mut self, help_message: &'a str) {
         self.help_message = Some(help_message);
     }
-    
+
     pub fn print(&self) {
         match self.pretty_print_error() {
-            Ok(()) => {},
+            Ok(()) => {}
             Err(_) => self.normal_print_error(), // If pretty printing doesn't work then print
                                                  // plain
         }
     }
 
     fn normal_print_error(&self) {
-        println!("Note! shark failed to pretty print your error:\n{}! {}\n  at {}", self.kind.prefix(), self.message, self.start_position);
+        println!(
+            "Note! shark failed to pretty print your error:\n{}! {}\n  at {}",
+            self.kind.prefix(),
+            self.message,
+            self.start_position
+        );
     }
 
     fn pretty_print_error(&self) -> io::Result<()> {
