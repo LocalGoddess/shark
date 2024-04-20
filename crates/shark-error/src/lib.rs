@@ -67,12 +67,11 @@ impl<'a> SharkError<'a> {
             Err(_) => String::new(),
         };
 
-
         let mut current_position = SourcePosition::new(None, 1, 1);
         let mut line_data: String = String::new();
 
         for char in content.chars() {
-            if current_position.is_within_lines(&self.start_position, &self.end_position) {
+            if current_position.is_within_lines(self.start_position, self.end_position) {
                 line_data.push(char);
                 if char == '\n' {
                     write!(stream, "{} |  {}", current_position.line, line_data)?;
@@ -86,8 +85,6 @@ impl<'a> SharkError<'a> {
             current_position =
                 SourcePosition::new(None, current_position.line, current_position.column + 1);
         }
-
-
 
         let help = match self.help_message {
             Some(message) => format!("help: {}", message),
@@ -127,32 +124,5 @@ impl SharkErrorKind {
             Self::Error => String::from("error"),
             Self::Warn => String::from("warn"),
         }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use std::path::Path;
-    use crate::{source::SourcePosition, SharkError, SharkErrorKind};
-
-    #[test]
-    fn test_test() {
-        let pos1 = SourcePosition::new(Some(Path::new("/tmp/test.shark")), 2, 5);
-        let pos2 = SourcePosition::new(None, 2, 7);
-
-        let mut error: SharkError = SharkError::new(
-            SharkErrorKind::Error,
-            &pos1,
-            &pos2,
-            "unknown token `le`"
-        );
-        error.supply_help("did you mean `let`?");
-        
-        println!("\n");
-        match error.print_error() {
-            Ok(()) => println!("\n"),
-            Err(_) => println!("\n")
-        }
-
     }
 }
