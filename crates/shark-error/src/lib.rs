@@ -33,6 +33,9 @@ impl<'a> SharkError<'a> {
         self.help_message = Some(help_message);
     }
 
+    /// This function will attempt to print an error to with formatting `stdout`.
+    /// If that fails, it will then print an error message with no formatting to
+    /// the `stdout`
     pub fn print(&self) {
         match self.pretty_print_error() {
             Ok(()) => {}
@@ -124,7 +127,10 @@ impl<'a> SharkError<'a> {
 }
 
 pub enum SharkErrorKind {
+    /// An error is something that prevents the code from compiling
     Error,
+    /// A warning is something that should be changed but will still
+    /// allow the code to compile
     Warn,
 }
 
