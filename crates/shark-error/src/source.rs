@@ -32,32 +32,9 @@ impl<'a> SourcePosition<'a> {
 
 impl<'a> Display for SourcePosition<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let path_str: &str = if self.file.is_some() {
-            match self.file.expect("Failed to get path for file").to_str() {
-                Some(path) => path,
-                None => "unknown",
-            }
-        } else {
-            "unknown"
-        };
+        let path_str: &str = self.file.as_ref()
+            .and_then(|x| x.to_str())
+            .map_or_else(|| "unknown", |x| x);
         write!(f, "{}:{}:{}", path_str, self.line, self.column)
-    }
-}
-
-impl<'a> PartialOrd for SourcePosition<'a> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        if !self.ensure_similar(other) {
-            return None;
-        }
-
-        if self.line == other.line {
-            return Some(std::cmp::Ordering::Equal);
-        }
-
-        if self.line >= other.line {
-            return Some(std::cmp::Ordering::Greater);
-        }
-
-        Some(std::cmp::Ordering::Less)
     }
 }

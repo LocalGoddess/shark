@@ -42,7 +42,7 @@ impl<'a> SharkError<'a> {
     }
 
     fn normal_print_error(&self) {
-        println!("Note! shark  failed to pretty print your error:\n{}! {}\n  at {}", self.kind.prefix(), self.message, self.start_position);
+        println!("Note! shark failed to pretty print your error:\n{}! {}\n  at {}", self.kind.prefix(), self.message, self.start_position);
     }
 
     fn pretty_print_error(&self) -> io::Result<()> {

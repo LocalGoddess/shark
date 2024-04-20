@@ -74,7 +74,7 @@ impl<'a> Lexer<'a> {
             }
 
             self.position += 1;
-            self.current_position = SourcePosition::new(None, self.current_position.line, self.current_position.column + 1);
+            self.current_position = SourcePosition::new(self.current_position.file, self.current_position.line, self.current_position.column + 1);
         }
 
         tokens
@@ -123,7 +123,7 @@ impl<'a> Lexer<'a> {
             }
 
             '\n' => {
-                self.current_position = SourcePosition::new(None, self.current_position.line + 1, 1);
+                self.current_position = SourcePosition::new(self.current_position.file, self.current_position.line + 1, 1);
             }
 
             '+' => {
