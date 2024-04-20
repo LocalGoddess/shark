@@ -2,7 +2,7 @@ use std::{fmt::Display, path::Path};
 
 /// Represents a position inside of a file. If file is of type `None`,
 /// then this will just represent a line and column in any file.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SourcePosition<'a> {
     pub file: Option<&'a Path>,
     pub line: usize,
