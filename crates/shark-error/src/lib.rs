@@ -1,7 +1,4 @@
-use std::{
-    io::{self, Write},
-    ops::Range,
-};
+use std::io::{self, Write};
 
 use source::SourcePosition;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
@@ -10,7 +7,8 @@ pub mod source;
 
 pub struct SharkError<'a> {
     pub kind: SharkErrorKind,
-    pub position: Range<SourcePosition<'a>>,
+    pub start_position: &'a SourcePosition<'a>,
+    pub end_position: &'a SourcePosition<'a>,
     pub message: &'a str,
     pub help_message: Option<&'a str>,
 }
@@ -18,12 +16,14 @@ pub struct SharkError<'a> {
 impl<'a> SharkError<'a> {
     pub fn new(
         kind: SharkErrorKind,
-        position: Range<SourcePosition<'a>>,
+        start_position: &'a SourcePosition<'a>,
+        end_position: &'a SourcePosition<'a>,
         message: &'a str,
     ) -> Self {
         Self {
             kind,
-            position,
+            start_position,
+            end_position,
             message,
             help_message: None,
         }
@@ -46,7 +46,7 @@ impl<'a> SharkError<'a> {
         writeln!(
             &mut stdout,
             "{}\n  at {}",
-            self.message, self.position.start
+            self.message, self.start_position
         )?;
 
         self.print_snippet(&mut stdout)?;
@@ -55,32 +55,39 @@ impl<'a> SharkError<'a> {
     }
 
     fn print_snippet(&self, stream: &mut StandardStream) -> io::Result<()> {
-        let file = match self.position.start.file {
+        let file = match self.start_position.file {
             Some(path) => path,
-            None => match self.position.end.file {
+            None => match self.end_position.file {
                 Some(path) => path,
                 None => panic!("Couldn't find file to get source snippet from"),
             },
         };
         let content = match std::fs::read_to_string(file) {
-            Ok(content) => String::from(content),
+            Ok(content) => content,
             Err(_) => String::new(),
         };
+
 
         let mut current_position = SourcePosition::new(None, 1, 1);
         let mut line_data: String = String::new();
 
         for char in content.chars() {
-            if current_position.is_within_lines(&self.position.start, &self.position.end) {
+            if current_position.is_within_lines(&self.start_position, &self.end_position) {
                 line_data.push(char);
                 if char == '\n' {
-                    writeln!(stream, "{} |  {}", current_position.line, line_data)?;
+                    write!(stream, "{} |  {}", current_position.line, line_data)?;
                     line_data.clear();
                 }
+            }
+
+            if char == '\n' {
+                current_position = SourcePosition::new(None, current_position.line + 1, 0);
             }
             current_position =
                 SourcePosition::new(None, current_position.line, current_position.column + 1);
         }
+
+
 
         let help = match self.help_message {
             Some(message) => format!("help: {}", message),
@@ -89,11 +96,11 @@ impl<'a> SharkError<'a> {
         write!(stream, "  |  ")?;
 
         stream.set_color(ColorSpec::new().set_fg(Some(self.kind.highlight_color())))?;
-        write!(
+        writeln!(
             stream,
-            "{}{} {}\n",
-            " ".repeat(self.position.start.column - 1),
-            "^".repeat(self.position.end.column - self.position.start.column),
+            "{}{} {}",
+            " ".repeat(self.start_position.column - 1),
+            "^".repeat(self.end_position.column - self.start_position.column),
             help
         )?;
 
@@ -120,5 +127,32 @@ impl SharkErrorKind {
             Self::Error => String::from("error"),
             Self::Warn => String::from("warn"),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::path::Path;
+    use crate::{source::SourcePosition, SharkError, SharkErrorKind};
+
+    #[test]
+    fn test_test() {
+        let pos1 = SourcePosition::new(Some(Path::new("/tmp/test.shark")), 2, 5);
+        let pos2 = SourcePosition::new(None, 2, 7);
+
+        let mut error: SharkError = SharkError::new(
+            SharkErrorKind::Error,
+            &pos1,
+            &pos2,
+            "unknown token `le`"
+        );
+        error.supply_help("did you mean `let`?");
+        
+        println!("\n");
+        match error.print_error() {
+            Ok(()) => println!("\n"),
+            Err(_) => println!("\n")
+        }
+
     }
 }
