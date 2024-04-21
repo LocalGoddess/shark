@@ -1,23 +1,23 @@
+use shark_error::source::SourcePosition;
+
 pub mod lexer;
 
 #[cfg(test)]
 mod tests;
 
 #[derive(Debug, Clone)]
-pub struct LexerToken {
+pub struct LexerToken<'a> {
     pub kind: TokenKind,
 
-    pub row: usize,
-    pub column: usize,
+    pub position: SourcePosition<'a>,
     pub length: usize,
 }
 
-impl LexerToken {
-    pub fn new(kind: TokenKind, row: usize, column: usize, length: usize) -> Self {
+impl<'a> LexerToken<'a> {
+    pub fn new(kind: TokenKind, position: SourcePosition<'a>, length: usize) -> Self {
         Self {
             kind,
-            row,
-            column,
+            position,
             length,
         }
     }
@@ -48,8 +48,8 @@ pub enum TokenKind {
     CurlyBrace { opened: bool },    // { }
     SquareBracket { opened: bool }, // [ ]
     Parenthesis { opened: bool },   // ( )
-                                        
-    EOL,                            // ;
+
+    EOL, // ;
 }
 
 #[derive(Debug, Clone, PartialEq)]

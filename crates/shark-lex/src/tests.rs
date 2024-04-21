@@ -31,7 +31,7 @@ fn _debug_token(tokens: &Vec<LexerToken>, position: usize) {
 
 #[test]
 fn test_identifier() {
-    let mut lexer = Lexer::new("this_is_a_crazy_identifier111");
+    let mut lexer = Lexer::new(None, "this_is_a_crazy_identifier111");
     let tokens = lexer.lex();
     assert!(check_correct_token(
         &tokens,
@@ -41,7 +41,7 @@ fn test_identifier() {
 
 #[test]
 fn test_keyword() {
-    let mut lexer = Lexer::new("fun");
+    let mut lexer = Lexer::new(None, "fun");
     let tokens = lexer.lex();
     assert!(check_correct_token(
         &tokens,
@@ -51,7 +51,7 @@ fn test_keyword() {
 
 #[test]
 fn test_literal_str() {
-    let mut lexer = Lexer::new("\"Hello, World\"");
+    let mut lexer = Lexer::new(None, "\"Hello, World\"");
     let tokens = lexer.lex();
     assert!(check_correct_token(
         &tokens,
@@ -61,7 +61,7 @@ fn test_literal_str() {
 
 #[test]
 fn test_literal_char() {
-    let mut lexer = Lexer::new("'h'");
+    let mut lexer = Lexer::new(None, "'h'");
     let tokens = lexer.lex();
     assert!(check_correct_token(
         &tokens,
@@ -71,7 +71,7 @@ fn test_literal_char() {
 
 #[test]
 fn test_literal_bool() {
-    let mut lexer = Lexer::new("true");
+    let mut lexer = Lexer::new(None, "true");
     let tokens = lexer.lex();
     assert!(check_correct_token(
         &tokens,
@@ -81,7 +81,7 @@ fn test_literal_bool() {
 
 #[test]
 fn test_literal_int32() {
-    let mut lexer = Lexer::new("-1337");
+    let mut lexer = Lexer::new(None, "-1337");
     let tokens = lexer.lex();
     assert!(check_correct_token(
         &tokens,
@@ -91,7 +91,7 @@ fn test_literal_int32() {
 
 #[test]
 fn test_literal_float32() {
-    let mut lexer = Lexer::new("-3.14");
+    let mut lexer = Lexer::new(None, "-3.14");
     let tokens = lexer.lex();
     assert!(check_correct_token(
         &tokens,
@@ -101,14 +101,14 @@ fn test_literal_float32() {
 
 #[test]
 fn test_single_char_token() {
-    let mut lexer = Lexer::new(";");
+    let mut lexer = Lexer::new(None, ";");
     let tokens = lexer.lex();
     assert!(check_correct_token(&tokens, TokenKind::EOL));
 }
 
 #[test]
 fn test_big() {
-    let mut lexer = Lexer::new("pub fun main() {\n    let a :: Float32 = 3.14;\n}");
+    let mut lexer = Lexer::new(None, "pub fun main() {\n    let a :: Float32 = 3.14;\n}");
     let tokens = lexer.lex();
 
     let expected = vec![
@@ -134,7 +134,7 @@ fn test_big() {
 
 #[test]
 fn test_condensed() {
-    let mut lexer = Lexer::new("1+1");
+    let mut lexer = Lexer::new(None, "1+1");
     let tokens = lexer.lex();
 
     let expected = vec![
