@@ -4,20 +4,20 @@ use shark_error::source::SourcePosition;
 
 use crate::{KeywordKind, LexerToken, LiteralKind, TokenKind};
 
-pub struct Lexer<'a> {
+pub struct Lexer<'lexer> {
     position: usize,
     length: usize,
 
     expected_token: Option<TokenKind>,
     working_content: String,
-    working_position: SourcePosition<'a>,
+    working_position: SourcePosition<'lexer>,
 
-    current_position: SourcePosition<'a>,
-    characters: Chars<'a>,
+    current_position: SourcePosition<'lexer>,
+    characters: Chars<'lexer>,
 }
 
-impl<'a> Lexer<'a> {
-    pub fn new(source_origin: Option<&'a Path>, source: &'a str) -> Self {
+impl<'lexer> Lexer<'lexer> {
+    pub fn new(source_origin: Option<&'lexer Path>, source: &'lexer str) -> Self {
         Self {
             position: 0,
             length: source.len(),
@@ -34,7 +34,7 @@ impl<'a> Lexer<'a> {
         String::clear(&mut self.working_content);
     }
 
-    pub fn push_token(&mut self, tokens: &mut Vec<LexerToken<'a>>) {
+    pub fn push_token(&mut self, tokens: &mut Vec<LexerToken<'lexer>>) {
         if self.expected_token.is_none() {
             todo!("Error here");
         }
@@ -49,7 +49,7 @@ impl<'a> Lexer<'a> {
         self.reset_token();
     }
 
-    pub fn push_single_char_token(&mut self, kind: TokenKind, tokens: &mut Vec<LexerToken<'a>>) {
+    pub fn push_single_char_token(&mut self, kind: TokenKind, tokens: &mut Vec<LexerToken<'lexer>>) {
         tokens.push(LexerToken::new(kind, self.current_position, 1));
         self.reset_token();
     }
@@ -84,7 +84,7 @@ impl<'a> Lexer<'a> {
         tokens
     }
 
-    pub fn find_new_token(&mut self, c: char, tokens: &mut Vec<LexerToken<'a>>) {
+    pub fn find_new_token(&mut self, c: char, tokens: &mut Vec<LexerToken<'lexer>>) {
         if is_valid_identifier_char(&c, true) {
             self.working_content.push(c);
             self.expected_token = Some(TokenKind::Identifier(self.working_content.to_string()));
@@ -243,7 +243,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn continue_token(&mut self, c: char, tokens: &mut Vec<LexerToken<'a>>) {
+    pub fn continue_token(&mut self, c: char, tokens: &mut Vec<LexerToken<'lexer>>) {
         self.working_content.push(c);
         self.finish_token(tokens);
     }
@@ -308,7 +308,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Finishes a token if it should be.
-    pub fn finish_token(&mut self, tokens: &mut Vec<LexerToken<'a>>) {
+    pub fn finish_token(&mut self, tokens: &mut Vec<LexerToken<'lexer>>) {
         if !self.should_finish() {
             return;
         }
