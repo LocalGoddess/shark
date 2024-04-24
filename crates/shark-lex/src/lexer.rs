@@ -1,6 +1,6 @@
 use std::{path::Path, str::Chars};
 
-use shark_error::source::SourcePosition;
+use shark_error::{source::SourcePosition, SharkError, SharkErrorKind};
 
 use crate::{KeywordKind, LexerToken, LiteralKind, TokenKind};
 
@@ -49,7 +49,11 @@ impl<'lexer> Lexer<'lexer> {
         self.reset_token();
     }
 
-    pub fn push_single_char_token(&mut self, kind: TokenKind, tokens: &mut Vec<LexerToken<'lexer>>) {
+    pub fn push_single_char_token(
+        &mut self,
+        kind: TokenKind,
+        tokens: &mut Vec<LexerToken<'lexer>>,
+    ) {
         tokens.push(LexerToken::new(kind, self.current_position, 1));
         self.reset_token();
     }
@@ -60,6 +64,7 @@ impl<'lexer> Lexer<'lexer> {
 
     pub fn lex(&mut self) -> Vec<LexerToken> {
         let mut tokens: Vec<LexerToken> = Vec::new();
+        let mut errors: Vec<SharkError<'lexer>> = Vec::new();
 
         while self.position < self.length {
             let c: char = match self.characters.next() {
@@ -68,9 +73,9 @@ impl<'lexer> Lexer<'lexer> {
             };
 
             if self.expected_token.is_none() {
-                self.find_new_token(c, &mut tokens);
+                self.find_new_token(c, &mut tokens, &mut errors);
             } else {
-                self.continue_token(c, &mut tokens);
+                self.continue_token(c, &mut tokens, &mut errors);
             }
 
             self.position += 1;
@@ -84,13 +89,18 @@ impl<'lexer> Lexer<'lexer> {
         tokens
     }
 
-    pub fn find_new_token(&mut self, c: char, tokens: &mut Vec<LexerToken<'lexer>>) {
+    pub fn find_new_token(
+        &mut self,
+        c: char,
+        tokens: &mut Vec<LexerToken<'lexer>>,
+        errors: &mut Vec<SharkError<'lexer>>,
+    ) {
         if is_valid_identifier_char(&c, true) {
             self.working_content.push(c);
             self.expected_token = Some(TokenKind::Identifier(self.working_content.to_string()));
             self.working_position = self.current_position;
 
-            self.finish_token(tokens);
+            self.finish_token(tokens, errors);
             return;
         }
 
@@ -99,7 +109,7 @@ impl<'lexer> Lexer<'lexer> {
             self.expected_token = Some(TokenKind::Literal(LiteralKind::Int(-1)));
             self.working_position = self.current_position;
 
-            self.finish_token(tokens);
+            self.finish_token(tokens, errors);
 
             return;
         }
@@ -123,7 +133,7 @@ impl<'lexer> Lexer<'lexer> {
                 }
                 self.working_position = self.current_position;
                 self.expected_token = Some(TokenKind::Literal(LiteralKind::Char(String::new())));
-                self.finish_token(tokens);
+                self.finish_token(tokens, errors);
             }
 
             '\n' => {
@@ -243,9 +253,14 @@ impl<'lexer> Lexer<'lexer> {
         }
     }
 
-    pub fn continue_token(&mut self, c: char, tokens: &mut Vec<LexerToken<'lexer>>) {
+    pub fn continue_token(
+        &mut self,
+        c: char,
+        tokens: &mut Vec<LexerToken<'lexer>>,
+        errors: &mut Vec<SharkError<'lexer>>,
+    ) {
         self.working_content.push(c);
-        self.finish_token(tokens);
+        self.finish_token(tokens, errors);
     }
 
     // Maybe this needs a refactor
@@ -308,7 +323,11 @@ impl<'lexer> Lexer<'lexer> {
     }
 
     /// Finishes a token if it should be.
-    pub fn finish_token(&mut self, tokens: &mut Vec<LexerToken<'lexer>>) {
+    pub fn finish_token(
+        &mut self,
+        tokens: &mut Vec<LexerToken<'lexer>>,
+        errors: &mut Vec<SharkError<'lexer>>,
+    ) {
         if !self.should_finish() {
             return;
         }
@@ -338,9 +357,13 @@ impl<'lexer> Lexer<'lexer> {
                 TokenKind::Literal(kind) => {
                     match kind {
                         LiteralKind::Float(_) | LiteralKind::Int(_) => {
-                            self.expected_token = Some(TokenKind::Literal(deduce_numeric_type(
-                                &self.working_content,
-                            )));
+                            self.expected_token =
+                                Some(TokenKind::Literal(Self::deduce_numeric_type(
+                                    &self.working_content,
+                                    self.working_position,
+                                    self.current_position,
+                                    errors,
+                                )));
                             self.push_token(tokens);
                         }
 
@@ -370,6 +393,43 @@ impl<'lexer> Lexer<'lexer> {
             }
         }
     }
+
+    fn deduce_numeric_type(
+        content: &str,
+        start_position: SourcePosition<'lexer>,
+        end_position: SourcePosition<'lexer>,
+        errors: &mut Vec<SharkError<'lexer>>,
+    ) -> LiteralKind {
+        if content.contains('.') {
+            let result = content.parse::<f32>();
+            if result.is_err() {
+                let error = SharkError::new(
+                    SharkErrorKind::Error,
+                    start_position,
+                    end_position,
+                    "invalid float literal",
+                );
+
+                errors.push(error);
+                return LiteralKind::Float(f32::NAN);
+            }
+
+            return LiteralKind::Float(result.unwrap());
+        }
+        let result = content.parse::<i32>();
+        if result.is_err() {
+            let error = SharkError::new(
+                SharkErrorKind::Error,
+                start_position,
+                end_position,
+                "invalid integer literal",
+            );
+
+            errors.push(error);
+            return LiteralKind::Int(0);
+        }
+        LiteralKind::Int(result.unwrap())
+    }
 }
 
 fn is_valid_identifier_char(c: &char, start: bool) -> bool {
@@ -387,22 +447,6 @@ fn is_valid_number_char(c: &char) -> bool {
 }
 
 // TODO(Chloe): Improve this when I make the error system
-fn deduce_numeric_type(content: &str) -> LiteralKind {
-    if content.contains('.') {
-        let result = content.parse::<f32>();
-        if result.is_err() {
-            todo!("Error here")
-        }
-
-        return LiteralKind::Float(result.unwrap());
-    }
-    let result = content.parse::<i32>();
-    if result.is_err() {
-        todo!("Error here")
-    }
-    LiteralKind::Int(result.unwrap())
-}
-
 fn _verify_char_content(_content: &str) {
     todo!("Verify the contents of char contents. For example you can't have a char that is 'ab', but you can have a char that is '\\u0040'. 
           IDK if/what this should return but I'll figure that out later. This will probably go back into the error system");

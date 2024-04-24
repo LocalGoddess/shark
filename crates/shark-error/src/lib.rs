@@ -7,8 +7,8 @@ pub mod source;
 
 pub struct SharkError<'a> {
     pub kind: SharkErrorKind,
-    pub start_position: &'a SourcePosition<'a>,
-    pub end_position: &'a SourcePosition<'a>,
+    pub start_position: SourcePosition<'a>,
+    pub end_position: SourcePosition<'a>,
     pub message: &'a str,
     pub help_message: Option<&'a str>,
 }
@@ -16,8 +16,8 @@ pub struct SharkError<'a> {
 impl<'a> SharkError<'a> {
     pub fn new(
         kind: SharkErrorKind,
-        start_position: &'a SourcePosition<'a>,
-        end_position: &'a SourcePosition<'a>,
+        start_position: SourcePosition<'a>,
+        end_position: SourcePosition<'a>,
         message: &'a str,
     ) -> Self {
         Self {
@@ -91,7 +91,7 @@ impl<'a> SharkError<'a> {
         let mut line_data: String = String::new();
 
         for char in content.chars() {
-            if current_position.is_within_lines(self.start_position, self.end_position) {
+            if current_position.is_within_lines(&self.start_position, &self.end_position) {
                 line_data.push(char);
                 if char == '\n' {
                     write!(stream, "{} |  {}", current_position.line, line_data)?;
