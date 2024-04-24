@@ -248,7 +248,16 @@ impl<'lexer> Lexer<'lexer> {
             }
 
             _ => {
-                // todo!("Error here") - Commenting this so the test passes
+                let error = SharkError::new(
+                    SharkErrorKind::Error,
+                    self.working_position,
+                    self.working_position,
+                    "invalid character",
+                );
+                // TODO(Chloe): probably add a link to valid identifier characters in the help
+                // message
+
+                errors.push(error);
             }
         }
     }
@@ -259,7 +268,21 @@ impl<'lexer> Lexer<'lexer> {
         tokens: &mut Vec<LexerToken<'lexer>>,
         errors: &mut Vec<SharkError<'lexer>>,
     ) {
-        self.working_content.push(c);
+        if let Some(TokenKind::Identifier(_token)) = &self.expected_token {
+            if !is_valid_identifier_char(&c, false) {
+                let error = SharkError::new(
+                    SharkErrorKind::Error,
+                    self.working_position,
+                    self.working_position,
+                    "invalid character",
+                );
+                errors.push(error);
+            } else {
+                self.working_content.push(c);
+            }
+        } else {
+            self.working_content.push(c);
+        }
         self.finish_token(tokens, errors);
     }
 
