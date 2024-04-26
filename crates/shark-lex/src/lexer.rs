@@ -2,12 +2,13 @@ use std::{path::Path, str::Chars};
 
 use shark_error::{source::SourcePosition, SharkError, SharkErrorKind};
 
-use crate::{KeywordKind, LexerToken, LiteralKind, TokenKind};
+use crate::{KeywordKind, LexerToken, LiteralKind, TokenKind, Comment};
 
 pub struct Lexer<'lexer> {
     position: usize,
     length: usize,
-
+    
+    in_comment: Option<Comment>,
     expected_token: Option<TokenKind>,
     working_content: String,
     working_position: SourcePosition<'lexer>,
@@ -21,6 +22,7 @@ impl<'lexer> Lexer<'lexer> {
         Self {
             position: 0,
             length: source.len(),
+            in_comment: None,
             expected_token: None,
             working_content: String::new(),
             working_position: SourcePosition::new(source_origin, 1, 1),
@@ -71,6 +73,22 @@ impl<'lexer> Lexer<'lexer> {
                 Some(c) => c,
                 None => break,
             };
+            
+            if let Some(ref comment) = self.in_comment {
+                match comment {
+                    Comment::LineComment => {
+                        if c == '\n' {
+                            self.in_comment = None;
+                        }
+                    },
+                    Comment::BlockComment => {
+                        if c == '*' && self.peek() == Some('/') {
+                            self.in_comment = None;
+                        }
+                    }
+                };
+                continue;
+            }
 
             if self.expected_token.is_none() {
                 self.find_new_token(c, &mut tokens, &mut errors);
@@ -172,6 +190,16 @@ impl<'lexer> Lexer<'lexer> {
             }
 
             '/' => {
+                if let Some(peeked) = self.peek() {
+                    if peeked == '/' {
+                        self.in_comment = Some(Comment::LineComment);
+                    }
+
+                    if peeked == '*' {
+                        self.in_comment = Some(Comment::BlockComment);
+                    }
+                    return;
+                }
                 self.push_single_char_token(TokenKind::Slash, tokens);
             }
 
