@@ -122,5 +122,5 @@ impl LiteralKind {
 #[derive(Debug, Clone)]
 pub enum Comment {
     LineComment,
-    BlockComment
+    BlockComment,
 }

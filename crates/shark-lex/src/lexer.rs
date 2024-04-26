@@ -2,12 +2,12 @@ use std::{path::Path, str::Chars};
 
 use shark_error::{source::SourcePosition, SharkError, SharkErrorKind};
 
-use crate::{KeywordKind, LexerToken, LiteralKind, TokenKind, Comment};
+use crate::{Comment, KeywordKind, LexerToken, LiteralKind, TokenKind};
 
 pub struct Lexer<'lexer> {
     position: usize,
     length: usize,
-    
+
     in_comment: Option<Comment>,
     expected_token: Option<TokenKind>,
     working_content: String,
@@ -73,14 +73,14 @@ impl<'lexer> Lexer<'lexer> {
                 Some(c) => c,
                 None => break,
             };
-            
+
             if let Some(ref comment) = self.in_comment {
                 match comment {
                     Comment::LineComment => {
                         if c == '\n' {
                             self.in_comment = None;
                         }
-                    },
+                    }
                     Comment::BlockComment => {
                         if c == '*' && self.peek() == Some('/') {
                             self.in_comment = None;

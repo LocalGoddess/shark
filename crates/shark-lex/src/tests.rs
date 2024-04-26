@@ -160,4 +160,16 @@ fn test_line_comments() {
     assert!(check_correct_token_order(&tokens, &expected));
 }
 
+#[test]
+fn test_block_comments() {
+    let mut lexer = Lexer::new(None, "/*1+1\n1+1\n1+1\n1+1\n1+1*/1+1");
+    let tokens = lexer.lex();
 
+    let expected = vec![
+        TokenKind::Literal(crate::LiteralKind::Int(1)),
+        TokenKind::Plus,
+        TokenKind::Literal(crate::LiteralKind::Int(1)),
+    ];
+
+    assert!(check_correct_token_order(&tokens, &expected));
+}
