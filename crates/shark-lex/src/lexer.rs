@@ -33,7 +33,7 @@ impl<'lexer> Lexer<'lexer> {
 
     pub fn reset_token(&mut self) {
         self.expected_token = None;
-        String::clear(&mut self.working_content);
+        self.working_content = String::new();
     }
 
     pub fn push_token(&mut self, tokens: &mut Vec<LexerToken<'lexer>>) {
@@ -426,6 +426,19 @@ impl<'lexer> Lexer<'lexer> {
                         }
 
                         LiteralKind::Char(_) => {
+                            if !Self::verify_char_content(&self.working_content) {
+                                let error = SharkError::new(
+                                    SharkErrorKind::Error,
+                                    self.working_position,
+                                    self.current_position,
+                                    "invalid character literal",
+                                );
+                                errors.push(error);
+
+                                self.reset_token();
+                                return;
+                            }
+
                             self.expected_token = Some(TokenKind::Literal(LiteralKind::Char(
                                 self.working_content.clone(),
                             )));
@@ -481,6 +494,32 @@ impl<'lexer> Lexer<'lexer> {
         }
         LiteralKind::Int(result.unwrap())
     }
+
+    fn verify_char_content(content: &str) -> bool {
+        if content.len() > 1 {
+            if !content.starts_with('\\') {
+                return false;
+            }
+
+            let c = &content[1..2];
+            return match c {
+                "0" => true,
+                "t" => true,
+                "n" => true,
+                "\\" => true,
+                "r" => true,
+                "u" => {
+                    let sub = &content[2..];
+                    sub.chars().all(|x| x.is_ascii_hexdigit())
+                }
+                "\"" => true,
+                "'" => true,
+
+                _ => false,
+            };
+        }
+        false
+    }
 }
 
 fn is_valid_identifier_char(c: &char, start: bool) -> bool {
@@ -495,10 +534,4 @@ fn is_valid_number_char(c: &char) -> bool {
         return true;
     }
     matches!(c, '_' | '.' | 'x' | 'a'..='f' | 'A'..='F')
-}
-
-// TODO(Chloe): Improve this when I make the error system
-fn _verify_char_content(_content: &str) {
-    todo!("Verify the contents of char contents. For example you can't have a char that is 'ab', but you can have a char that is '\\u0040'. 
-          IDK if/what this should return but I'll figure that out later. This will probably go back into the error system");
 }
