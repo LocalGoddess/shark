@@ -1,4 +1,4 @@
-use std::{path::Path, str::Chars, process::{ExitCode, exit}};
+use std::{path::Path, process::exit, str::Chars};
 
 use shark_error::{source::SourcePosition, SharkError, SharkErrorKind};
 
@@ -427,15 +427,12 @@ impl<'lexer> Lexer<'lexer> {
                         }
 
                         LiteralKind::Char(_) => {
-                            if !Self::verify_char_content(&self.working_content) {
-                                let error = SharkError::new(
-                                    SharkErrorKind::Error,
-                                    self.working_position,
-                                    self.current_position,
-                                    "invalid character literal",
-                                );
-                                errors.push(error);
-
+                            if !Self::verify_char_content(
+                                &self.working_content,
+                                self.working_position,
+                                self.current_position,
+                                errors,
+                            ) {
                                 self.reset_token();
                                 return;
                             }
@@ -496,9 +493,22 @@ impl<'lexer> Lexer<'lexer> {
         LiteralKind::Int(result.unwrap())
     }
 
-    fn verify_char_content(content: &str) -> bool {
+    fn verify_char_content(
+        content: &str,
+        start_position: SourcePosition<'lexer>,
+        end_position: SourcePosition<'lexer>,
+        errors: &mut Vec<SharkError<'lexer>>,
+    ) -> bool {
         if content.len() > 1 {
             if !content.starts_with('\\') {
+                let error = SharkError::new(
+                    SharkErrorKind::Error,
+                    start_position,
+                    end_position,
+                    "invalid character literal",
+                );
+                errors.push(error);
+
                 return false;
             }
 
@@ -516,10 +526,21 @@ impl<'lexer> Lexer<'lexer> {
                 "\"" => true,
                 "'" => true,
 
-                _ => false,
+                _ => {
+                    let mut error = SharkError::new(
+                        SharkErrorKind::Error,
+                        start_position,
+                        end_position,
+                        "invalid character literal escape",
+                    );
+                    error.supply_help("Did you mean to use `\\\\` instead of a character escape?");
+
+                    errors.push(error);
+                    false
+                }
             };
         }
-        false
+        true
     }
 }
 
