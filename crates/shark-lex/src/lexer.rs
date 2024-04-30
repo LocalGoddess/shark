@@ -1,4 +1,4 @@
-use std::{path::Path, str::Chars};
+use std::{path::Path, str::Chars, process::{ExitCode, exit}};
 
 use shark_error::{source::SourcePosition, SharkError, SharkErrorKind};
 
@@ -38,7 +38,8 @@ impl<'lexer> Lexer<'lexer> {
 
     pub fn push_token(&mut self, tokens: &mut Vec<LexerToken<'lexer>>) {
         if self.expected_token.is_none() {
-            todo!("Error here");
+            println!("Lexer reached an invalid state. Please restart");
+            exit(1);
         }
 
         tokens.push(LexerToken::new(
