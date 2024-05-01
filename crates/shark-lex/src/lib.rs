@@ -62,6 +62,7 @@ pub enum KeywordKind {
     In,
     Let,
     Mut,
+    Of,
     Ptr,
     Pub,
     Ref,
@@ -70,6 +71,7 @@ pub enum KeywordKind {
     Type,
     Unsafe,
     When,
+    Where,
     Yield,
 }
 
@@ -84,6 +86,7 @@ impl KeywordKind {
             "in" => Some(Self::In),
             "let" => Some(Self::Let),
             "mut" => Some(Self::Mut),
+            "of" => Some(Self::Of),
             "ptr" => Some(Self::Ptr),
             "pub" => Some(Self::Pub),
             "ref" => Some(Self::Ref),
@@ -92,6 +95,7 @@ impl KeywordKind {
             "type" => Some(Self::Type),
             "unsafe" => Some(Self::Unsafe),
             "when" => Some(Self::When),
+            "where" => Some(Self::Where),
             "yield" => Some(Self::Yield),
 
             _ => None,
