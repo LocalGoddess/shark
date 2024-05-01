@@ -38,8 +38,13 @@ impl<'lexer> Lexer<'lexer> {
 
     pub fn push_token(&mut self, tokens: &mut Vec<LexerToken<'lexer>>) {
         if self.expected_token.is_none() {
-            println!("Lexer reached an invalid state. Please restart");
-            exit(1);
+            match shark_error::force_quit("Lexer reached an invalid state. Please try again", 1) {
+                Ok(()) => {}
+                Err(_) => {
+                    println!("Lexer reached an invalid state. Please try again");
+                    exit(1);
+                }
+            };
         }
 
         tokens.push(LexerToken::new(

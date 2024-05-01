@@ -1,4 +1,7 @@
-use std::io::{self, Write};
+use std::{
+    io::{self, Write},
+    process::exit,
+};
 
 use source::SourcePosition;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
@@ -148,4 +151,20 @@ impl SharkErrorKind {
             Self::Warn => String::from("warn"),
         }
     }
+}
+
+/// Force quits and completely terminates the compilation process.
+/// No other errors or warnings will be printed
+/// This should be used as a last resort
+pub fn force_quit(message: &str, error_code: i32) -> io::Result<()> {
+    let mut stdout = StandardStream::stdout(ColorChoice::Always);
+
+    let color = Some(SharkErrorKind::Error.highlight_color());
+    stdout.set_color(ColorSpec::new().set_fg(color).set_bold(true))?;
+    write!(stdout, "FATAL! ")?;
+    stdout.set_color(ColorSpec::new().set_fg(color).set_bold(false))?;
+    writeln!(stdout, "{}", message)?;
+    stdout.reset()?;
+
+    exit(error_code);
 }
