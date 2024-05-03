@@ -36,6 +36,29 @@ impl<'a> SharkError<'a> {
         self.help_message = Some(help_message);
     }
 
+    pub fn check_errors(errors: &Vec<Self>) {
+        let mut is_error: bool = false;
+        for error in errors {
+            error.print();
+            if error.kind == SharkErrorKind::Error {
+                is_error = true;
+            }
+        }
+
+        if is_error {
+            match Self::internal_check_errors(&errors.len()) {
+                Ok(()) => {}
+                Err(_) => {
+                    println!(
+                        "error! could not continue compilation because of {} errors",
+                        errors.len()
+                    );
+                    exit(1);
+                }
+            }
+        }
+    }
+
     /// This function will attempt to print an error to with formatting `stdout`.
     /// If that fails, it will then print an error message with no formatting to
     /// the `stdout`
@@ -127,8 +150,27 @@ impl<'a> SharkError<'a> {
         stream.reset()?;
         Ok(())
     }
+
+    fn internal_check_errors(length: &usize) -> io::Result<()> {
+        let mut stdout = StandardStream::stdout(ColorChoice::Always);
+        stdout.set_color(
+            ColorSpec::new()
+                .set_fg(Some(SharkErrorKind::Error.highlight_color()))
+                .set_bold(true),
+        )?;
+        write!(&mut stdout, "{}! ", SharkErrorKind::Error.prefix())?;
+        stdout.reset()?;
+        writeln!(
+            &mut stdout,
+            "could not continue compilation because of {} errors",
+            length
+        )?;
+        stdout.reset()?;
+        exit(1);
+    }
 }
 
+#[derive(Debug, PartialEq)]
 pub enum SharkErrorKind {
     /// An error is something that prevents the code from compiling
     Error,

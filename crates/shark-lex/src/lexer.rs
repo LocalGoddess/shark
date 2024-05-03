@@ -110,6 +110,8 @@ impl<'lexer> Lexer<'lexer> {
             );
         }
 
+        SharkError::check_errors(&errors); // Will exit if there are errors (not warnings)
+
         tokens
     }
 
