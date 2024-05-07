@@ -1,10 +1,10 @@
 [workspace]
 members = [
     "crates/sharkc",
-    "crates/shark-lex",
-    "crates/shark-error"
+    "crates/shark-core",
 ]
 resolver = "2"
 
 [workspace.package]
 version = "0.0.0"
+edition = "2021"

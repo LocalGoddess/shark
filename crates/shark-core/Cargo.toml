@@ -1,0 +1,4 @@
+[package]
+name = "shark-core"
+version.workspace = true
+edition.workspace = true
