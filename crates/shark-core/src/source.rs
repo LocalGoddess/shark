@@ -10,7 +10,13 @@ pub struct SourcePosition<'position> {
 }
 
 impl<'position> SourcePosition<'position> {
+    /// Creates a new [SourcePosition]
+    /// Note! a line or column of zero can't exist in a [SourcePosition]. Both lines and columns
+    /// start at one
     pub fn new(path: Option<&'position Path>, line: usize, column: usize) -> Self {
+        if line == 0 || column == 0 {
+            panic!("A SourcePosition can not have a line or column with a value of zero")
+        }
         Self { path, line, column }
     }
 }
