@@ -7,5 +7,12 @@ name = "shark-core"
 version = "0.0.0"
 
 [[package]]
+name = "shark-lex"
+version = "0.0.0"
+dependencies = [
+ "shark-core",
+]
+
+[[package]]
 name = "sharkc"
 version = "0.0.0"

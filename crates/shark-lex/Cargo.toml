@@ -1,0 +1,8 @@
+[package]
+name = "shark-lex"
+description = "Library for the Lexer and its related parts"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+shark-core = { path = "../shark-core" }

@@ -2,6 +2,7 @@
 members = [
     "crates/sharkc",
     "crates/shark-core",
+    "crates/shark-lex",
 ]
 resolver = "2"
 
