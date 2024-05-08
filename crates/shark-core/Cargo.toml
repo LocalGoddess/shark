@@ -1,4 +1,5 @@
 [package]
 name = "shark-core"
+description = "Core Api for things required by all other crates in the shark ecosystem"
 version.workspace = true
 edition.workspace = true
