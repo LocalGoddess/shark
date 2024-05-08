@@ -21,3 +21,17 @@ fn source_position_ordering_test() {
     assert!(position_one < position_two);
     assert!(position_two > position_one);
 }
+
+#[test]
+fn source_position_iter_test() {
+    let position_one: SourcePosition<'_> = SourcePosition::new(None, 1, 1);
+    let position_two: SourcePosition<'_> = SourcePosition::new(Some(Path::new("foo.bar")), 5, 1);
+
+    let mut count = 0;
+
+    let range = position_one..=position_two;
+    for _ in SourcePosition::into_iter(range) {
+        count += 1;
+    }
+    assert_eq!(count, 5)
+}

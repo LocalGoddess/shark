@@ -1,4 +1,4 @@
-use std::{fmt::Display, path::Path};
+use std::{fmt::Display, ops::RangeInclusive, path::Path};
 
 /// Represents a position within a source file. If the path is [Option::None], then this will just
 /// represent a line and column in any source file
@@ -18,6 +18,18 @@ impl<'position> SourcePosition<'position> {
             panic!("A SourcePosition can not have a line or column with a value of zero")
         }
         Self { path, line, column }
+    }
+
+    // This is done because [std::iter::Step] is currently in nightly. When that reaches full release
+    // this will be removed
+    pub fn into_iter(
+        range: RangeInclusive<SourcePosition<'position>>,
+    ) -> SourcePositionIterator<'position> {
+        SourcePositionIterator {
+            start: *range.start(),
+            end: *range.end(),
+            current: 0,
+        }
     }
 }
 
@@ -56,5 +68,30 @@ impl<'position> PartialEq for SourcePosition<'position> {
             }
         }
         self.line == other.line && self.column == other.column
+    }
+}
+
+// This is done because [std::iter::Step] is currently in nightly. When that reaches full release
+// this will be removed
+pub struct SourcePositionIterator<'position> {
+    start: SourcePosition<'position>,
+    end: SourcePosition<'position>,
+    current: usize,
+}
+
+impl<'position> Iterator for SourcePositionIterator<'position> {
+    type Item = SourcePosition<'position>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.current += 1;
+
+        if self.current > self.end.line {
+            return None;
+        }
+        Some(SourcePosition::new(
+            self.start.path,
+            self.start.line + self.current,
+            1,
+        ))
     }
 }
