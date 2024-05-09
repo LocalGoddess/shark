@@ -83,6 +83,10 @@ impl<'position> Iterator for SourcePositionIterator<'position> {
     type Item = SourcePosition<'position>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        if self.start.line > self.end.line {
+            return None;
+        }
+
         self.current += 1;
 
         if self.current > self.end.line {
