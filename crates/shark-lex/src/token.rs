@@ -15,9 +15,15 @@ pub struct LexerToken<'token> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
-    // TODO(Chloe): Add all of the kinds of tokens here
+    Identifer(String),
+    Keyword(KeywordKind),
+    Literal(LiteralKind),
+    
+    
+
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum KeywordKind {
     Else,
     Enum,
