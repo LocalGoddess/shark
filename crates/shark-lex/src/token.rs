@@ -18,9 +18,40 @@ pub enum TokenKind {
     Identifer(String),
     Keyword(KeywordKind),
     Literal(LiteralKind),
-    
-    
 
+    Plus,     // +
+    Minus,    // -
+    Multiply, // *
+    Divide,   // /
+
+    PlusAssign,     // +=
+    MinusAssign,    // -=
+    MultiplyAssign, // *-
+    DivideAssign,   // /=
+
+    Greater, // >
+    Lesser,  // <
+    Or,      // |
+    Not,     // !
+    And,     // &&
+    Equal,   // =
+
+    GreaterOrEqual, // >=
+    LessOrEqual,    // <=
+    NotEqual,       // !=
+    EqualTo,        // ==
+
+    ShiftRight, // >>
+    ShiftLeft,  // <<
+    BitwiseAnd, // &
+
+    Comma,      // ,
+    TypeAssign, // ::
+    Dot,        // .
+    CurlyBrace { opened: bool },
+    Parenthesis { opened: bool },
+
+    EOL, // ; and potentially newline
 }
 
 #[derive(Debug, Clone, PartialEq)]
