@@ -1,4 +1,5 @@
 use std::ops::RangeInclusive;
+use std::iter::Iterator;
 
 use shark_core::source::SourcePosition;
 
