@@ -129,4 +129,21 @@ pub enum LiteralKind {
     Boolean(bool),
 }
 
+impl LiteralKind {
+
+    /// Reads a literal integer in order to get the radix (base) of it
+    fn get_literal_integer_radix(working_content: &String) -> usize {
+        let prefix = working_content.split_at(2).0.to_lowercase();
+
+        return match prefix.as_str() {
+            "0x" => 16,
+            "0o" => 8,
+            "0b" => 2,
+
+            _ => 10
+        }
+    }
+
+}
+
 // TODO(Chloe): Create functions for identifying and converting values into the proper type
