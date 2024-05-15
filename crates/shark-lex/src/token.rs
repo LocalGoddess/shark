@@ -2,7 +2,10 @@ use std::{error::Error, ops::RangeInclusive};
 
 use shark_core::source::SourcePosition;
 
-use crate::error::{InvalidFloatRadix, UnknownNumericSuffixError};
+use crate::error::{
+    InvalidCharacterLiteralErrrorKind, InvalidCharacterLiteralSizeError, InvalidFloatRadix,
+    UnknownNumericSuffixError,
+};
 
 /// Represents a token produced during lexical analysis. [LexerToken]s give more meaning to the
 /// source code because each token resembles are certain concept in the language such as a keyword,
@@ -152,6 +155,9 @@ impl LiteralKind {
         (radix, is_negative)
     }
 
+    /// Converts a token's working_content to a numeric [LiteralKind]
+    /// If this function is supplied something other than a number, it will probably break so its
+    /// up to the caller to make sure the incoming content is a number.
     pub fn into_numeric_literal(working_content: &str) -> Result<LiteralKind, Box<dyn Error>> {
         let (radix, is_negative) = Self::get_literal_integer_radix(working_content);
         let mut actual_number = if radix != 10 {
@@ -218,6 +224,119 @@ impl LiteralKind {
             Ok(LiteralKind::Float32(working_content.parse::<f32>()?))
         } else {
             Ok(LiteralKind::Int32(working_content.parse::<i32>()?))
+        }
+    }
+
+    fn convert_character_escapes(working_content: &str) -> String {
+        let mut result = String::new();
+        let mut iterator = working_content.chars().peekable();
+
+        while let Some(character) = iterator.next() {
+            if character == '\\' {
+                if let Some(peek) = iterator.next() {
+                    match peek {
+                        'n' => result.push('\n'),
+                        't' => result.push('\t'),
+                        'r' => result.push('\r'),
+                        '\\' => result.push('\\'),
+                        '\"' => result.push('"'),
+                        '\'' => result.push('\''),
+                        '0' => result.push('\0'),
+                        'u' => {
+                            if let Some('{') = iterator.next() {
+                                let mut hex = String::new();
+                                while let Some(&next_char) = iterator.peek() {
+                                    if next_char == '}' {
+                                        iterator.next(); // consume
+                                        break;
+                                    } else {
+                                        hex.push(next_char);
+                                        iterator.next(); // consume
+                                    }
+                                }
+                                if let Ok(codepoint) = u32::from_str_radix(&hex, 16) {
+                                    if let Some(unicode_character) = char::from_u32(codepoint) {
+                                        result.push(unicode_character);
+                                    } else {
+                                        // Invalid unicode character
+                                        result.push_str(&format!("\\u{{{}}}", hex));
+                                    }
+                                } else {
+                                    // Invalid hex
+                                    result.push_str(&format!("\\u{{{}}}", hex));
+                                }
+                            } else {
+                                // Invalid escape
+                                result.push_str("\\u");
+                            }
+                        }
+                        _ => {
+                            // Unknown escape
+                            result.push('\\');
+                            result.push(peek);
+                        }
+                    }
+                } else {
+                    // Trailing backslash
+                    result.push('\\');
+                }
+            } else {
+                result.push(character);
+            }
+        }
+
+        result
+    }
+
+    pub fn into_char_literal(working_content: &str) -> Result<LiteralKind, Box<dyn Error>> {
+        let mut value = working_content.to_string();
+
+        // Remove surrounding '
+        if value.starts_with('\'') {
+            value = working_content[1..].to_string();
+        }
+        if value.ends_with('\'') {
+            value = working_content[..value.len()].to_string();
+        }
+
+        value = Self::convert_character_escapes(&value);
+        if value.len() > 1 {
+            return Err(Box::new(InvalidCharacterLiteralSizeError {
+                kind: InvalidCharacterLiteralErrrorKind::TooLong,
+            }));
+        }
+
+        let character: char = match value.chars().next() {
+            Some(x) => x,
+            None => {
+                return Err(Box::new(InvalidCharacterLiteralSizeError {
+                    kind: InvalidCharacterLiteralErrrorKind::Empty,
+                }))
+            }
+        };
+        Ok(LiteralKind::Char(character))
+    }
+
+    pub fn into_string_literal(working_content: &str) -> LiteralKind {
+        let mut value = working_content.to_string();
+
+        // Trim off the starting and ending quotations if they exist
+        if value.starts_with('"') {
+            value = value[1..].to_string();
+        }
+        if value.ends_with('"') {
+            value = value[..value.len()].to_string();
+        }
+
+        LiteralKind::Str(Self::convert_character_escapes(&value))
+    }
+
+    // Most useful function ever might remove it
+    pub fn into_boolean_literal(working_content: &str) -> Option<LiteralKind> {
+        match working_content {
+            "true" => Some(LiteralKind::Boolean(true)),
+            "false" => Some(LiteralKind::Boolean(false)),
+            _ => None,
         }
     }
 }

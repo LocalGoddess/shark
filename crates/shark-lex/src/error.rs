@@ -23,3 +23,22 @@ impl Display for InvalidFloatRadix {
 }
 
 impl Error for InvalidFloatRadix {}
+
+#[derive(Debug)]
+pub struct InvalidCharacterLiteralSizeError {
+    pub kind: InvalidCharacterLiteralErrrorKind,
+}
+
+impl Display for InvalidCharacterLiteralSizeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "character literals must only be one character in length")
+    }
+}
+
+impl Error for InvalidCharacterLiteralSizeError {}
+
+#[derive(Debug)]
+pub enum InvalidCharacterLiteralErrrorKind {
+    TooLong,
+    Empty,
+}
