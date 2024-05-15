@@ -288,6 +288,8 @@ impl LiteralKind {
         result
     }
 
+    /// Converts a token's working_content into a [LiteralKind::Char]
+    /// This function assumes the provided content is somewhere near a character
     pub fn into_char_literal(working_content: &str) -> Result<LiteralKind, Box<dyn Error>> {
         let mut value = working_content.to_string();
 
@@ -317,6 +319,8 @@ impl LiteralKind {
         Ok(LiteralKind::Char(character))
     }
 
+    /// Converts a token's working_content into a [LiteralKind::Str]
+    /// This function assumes the provided content is somewhere near a character       
     pub fn into_string_literal(working_content: &str) -> LiteralKind {
         let mut value = working_content.to_string();
 
