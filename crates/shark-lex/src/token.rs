@@ -160,16 +160,17 @@ impl LiteralKind {
     /// up to the caller to make sure the incoming content is a number.
     pub fn into_numeric_literal(working_content: &str) -> Result<LiteralKind, Box<dyn Error>> {
         let (radix, is_negative) = Self::get_literal_integer_radix(working_content);
-        let mut actual_number = if radix != 10 {
-            working_content[if is_negative { 3 } else { 2 }..].to_owned() // remove this 0x, 0b, or 0o
+        let actual_number = if radix != 10 {
+            let mut result = working_content[if is_negative { 3 } else { 2 }..].to_owned(); // remove this 0x, 0b, or 0o
+
+            // readd the previously removed negative sign
+            if is_negative {
+                result = format!("-{}", result);
+            }
+            result
         } else {
             working_content.to_owned()
         };
-
-        if is_negative {
-            actual_number = format!("-{}", actual_number); // readd the previously removed negative
-                                                           // sign
-        }
 
         for (index, c) in actual_number.chars().enumerate() {
             if !c.is_ascii_digit() && c != '-' && c != '.' {
