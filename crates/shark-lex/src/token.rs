@@ -59,6 +59,66 @@ pub enum TokenKind {
     EOL, // ; and potentially newline
 }
 
+impl TokenKind {
+
+    /// Attempts to create a grammar token using the current character and the next character
+    pub fn create_grammar_token(current: &char, peek: Option<&char>) -> Option<TokenKind> {
+        match current {
+            '+' => match peek {
+                Some('=') => Some(TokenKind::PlusAssign),
+                _ => Some(TokenKind::Plus),
+            },
+            '-' => match peek {
+                Some('=') => Some(TokenKind::MinusAssign),
+                _ => Some(TokenKind::Minus),
+            },
+            '*' => match peek {
+                Some('=') => Some(TokenKind::MultiplyAssign),
+                _ => Some(TokenKind::Multiply),
+            },
+            '/' => match peek {
+                Some('=') => Some(TokenKind::DivideAssign),
+                _ => Some(TokenKind::Divide),
+            },
+            '>' => match peek {
+                Some('=') => Some(TokenKind::GreaterOrEqual),
+                Some('>') => Some(TokenKind::ShiftRight),
+                _ => Some(TokenKind::Greater),
+            },
+            '<' => match peek {
+                Some('=') => Some(TokenKind::LessOrEqual),
+                Some('<') => Some(TokenKind::ShiftLeft),
+                _ => Some(TokenKind::Lesser),
+            },
+            '!' => match peek {
+                Some('=') => Some(TokenKind::NotEqual),
+                _ => Some(TokenKind::Not),
+            },
+            '=' => match peek {
+                Some('=') => Some(TokenKind::EqualTo),
+                _ => Some(TokenKind::Equal),
+            },
+            '&' => match peek {
+                Some('&') => Some(TokenKind::And),
+                _ => Some(TokenKind::BitwiseAnd),
+            },
+            ':' => match peek {
+                Some(':') => Some(TokenKind::TypeAssign),
+                _ => None,
+            },
+            '|' => Some(TokenKind::Or),
+            ',' => Some(TokenKind::Comma),
+            '.' => Some(TokenKind::Dot),
+            '{' => Some(TokenKind::CurlyBrace { opened: true }),
+            '}' => Some(TokenKind::CurlyBrace { opened: false }),
+            '(' => Some(TokenKind::Parenthesis { opened: true }),
+            ')' => Some(TokenKind::Parenthesis { opened: false }),
+            ';' => Some(TokenKind::EOL),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum KeywordKind {
     Else,
@@ -84,7 +144,8 @@ pub enum KeywordKind {
 }
 
 impl KeywordKind {
-    pub fn is_keyword(identifier: String) -> Option<Self> {
+    /// Attempts to create a keyword based on the string inputted
+    pub fn create_keyword(identifier: String) -> Option<Self> {
         match identifier.as_str() {
             "else" => Some(Self::Else),
             "enum" => Some(Self::Enum),
@@ -285,5 +346,3 @@ impl LiteralKind {
         }
     }
 }
-
-// TODO(Chloe): Create functions for identifying and converting values into the proper type
