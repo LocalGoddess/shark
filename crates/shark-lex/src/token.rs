@@ -60,7 +60,6 @@ pub enum TokenKind {
 }
 
 impl TokenKind {
-
     /// Attempts to create a grammar token using the current character and the next character
     pub fn create_grammar_token(current: &char, peek: Option<&char>) -> Option<TokenKind> {
         match current {
