@@ -116,6 +116,26 @@ impl TokenKind {
             _ => None,
         }
     }
+    
+    /// Gets the length of a grammar token for use in calculating how many characters to consume
+    /// after using [TokenKind::create_grammar_token]
+    pub(crate) fn get_grammar_token_length(&self) -> usize {
+        match self {
+            Self::PlusAssign
+            | Self::MinusAssign
+            | Self::MultiplyAssign
+            | Self::DivideAssign
+            | Self::GreaterOrEqual
+            | Self::ShiftRight
+            | Self::LessOrEqual
+            | Self::ShiftLeft
+            | Self::NotEqual
+            | Self::EqualTo
+            | Self::And
+            | Self::TypeAssign => 2,
+            _ => 1,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
