@@ -1,4 +1,4 @@
-macro_rules! unescape_characters {
+macro_rules! encode_characters {
     ($text:expr) => {{
         let mut result = String::with_capacity($text.len());
         let mut iterator = $text.chars().peekable();
@@ -15,7 +15,7 @@ macro_rules! unescape_characters {
                 Some('r') => result.push('\r'),
                 Some('\\') => result.push('\\'),
                 Some('"') => result.push('"'),
-                Some('\'') => result.push('\''),
+                Some('\'') => result.push('\\'),
                 Some('0') => result.push('\0'),
                 Some('u') => {
                     if Some('{') == iterator.next() {

@@ -1,11 +1,10 @@
 use std::{error::Error, ops::RangeInclusive};
 
-use shark_core::source::SourcePosition;
-
 use crate::error::{
     InvalidCharacterLiteralErrrorKind, InvalidCharacterLiteralSizeError, InvalidFloatRadix,
     UnknownNumericSuffixError,
 };
+use shark_core::source::SourcePosition;
 
 /// Represents a token produced during lexical analysis. [LexerToken]s give more meaning to the
 /// source code because each token resembles are certain concept in the language such as a keyword,
@@ -116,7 +115,7 @@ impl TokenKind {
             _ => None,
         }
     }
-    
+
     /// Gets the length of a grammar token for use in calculating how many characters to consume
     /// after using [TokenKind::create_grammar_token]
     pub(crate) fn get_grammar_token_length(&self) -> usize {
@@ -321,7 +320,7 @@ impl LiteralKind {
             value = working_content[..value.len()].to_string();
         }
 
-        value = unescape_characters!(value);
+        value = encode_characters!(value);
         if value.len() > 1 {
             return Err(Box::new(InvalidCharacterLiteralSizeError {
                 kind: InvalidCharacterLiteralErrrorKind::TooLong,
@@ -352,7 +351,7 @@ impl LiteralKind {
             value = value[..value.len()].to_string();
         }
 
-        let value = unescape_characters!(value);
+        let value = encode_characters!(value);
         LiteralKind::Str(value)
     }
 
