@@ -37,7 +37,15 @@ impl<'lexer> Lexer<'lexer> {
         }
     }
 
-    pub fn push_token(&mut self) {
+    fn start_token(&mut self, kind: TokenKind, initial_data: Option<char>) {
+        self.token_inferred_kind = Some(kind);
+        self.token_start_position = Some(self.current_position);
+        if let Some(initial_data) = initial_data {
+            self.token_content.push(initial_data);
+        }
+    }
+
+    fn push_token(&mut self) {
         if self.token_inferred_kind.is_none() {
             panic!("invalid lexer state to push a token"); // See above comment
         }
@@ -56,9 +64,26 @@ impl<'lexer> Lexer<'lexer> {
         self.reset_token_state();
     }
 
-    pub fn reset_token_state(&mut self) {
+    fn reset_token_state(&mut self) {
         self.token_start_position = None;
         self.token_inferred_kind = None;
         self.token_content = String::new();
     }
+
+    pub fn lex(&mut self) {
+        while let Some(current_character) = self.source.next() {
+            if self.token_inferred_kind.is_none() {
+                // Find a new token to infer
+                self.infer_token(&current_character)
+            } else {
+                // Finish the current token
+            }
+            if current_character == '\n' {
+                self.current_position.newline();
+            }
+            self.current_position.next_column();
+        }
+    }
+
+    fn infer_token(&mut self, _current_character: &char) {}
 }

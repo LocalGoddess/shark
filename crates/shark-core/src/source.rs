@@ -14,10 +14,31 @@ impl<'position> SourcePosition<'position> {
     /// Note! a line or column of zero can't exist in a [SourcePosition]. Both lines and columns
     /// start at one
     pub fn new(path: Option<&'position Path>, line: usize, column: usize) -> Self {
-        if line == 0 || column == 0 {
-            panic!("A SourcePosition can not have a line or column with a value of zero")
+        if line < 1 || column < 1 {
+            panic!("A SourcePosition can not have a line or column with a value less than one")
         }
         Self { path, line, column }
+    }
+
+    /// Increases the column number by one
+    /// Note: This function does not check for a newline
+    pub fn next_column(&mut self) {
+        self.column += 1;
+    }
+
+    /// Increases the line number by one
+    /// Note: This function does not check to see if the line number is valid
+    pub fn next_line(&mut self) {
+        self.line += 1;
+        self.column = 1;
+    }
+
+    /// Increases the line number by one and sets the column to zero
+    /// Note: This function does not check to see if the line number is valid and it is up to the
+    /// user to make sure the column gets incremented properly
+    pub fn newline(&mut self) {
+        self.line += 1;
+        self.column = 0;
     }
 
     // This is done because [std::iter::Step] is currently in nightly. When that reaches full release
