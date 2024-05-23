@@ -15,7 +15,7 @@ macro_rules! encode_characters {
                 Some('r') => result.push('\r'),
                 Some('\\') => result.push('\\'),
                 Some('"') => result.push('"'),
-                Some('\'') => result.push('\\'),
+                Some('\'') => result.push('\''),
                 Some('0') => result.push('\0'),
                 Some('u') => {
                     if Some('{') == iterator.next() {
