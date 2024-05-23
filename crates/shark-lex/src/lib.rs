@@ -4,7 +4,7 @@ pub mod macros;
 use std::{path::Path, str::Chars};
 
 use shark_core::source::SourcePosition;
-use token::{LexerToken, TokenKind};
+use token::{LexerToken, LiteralKind, TokenKind};
 
 pub mod error;
 pub mod token;
@@ -64,20 +64,37 @@ impl<'lexer> Lexer<'lexer> {
         self.reset_token_state();
     }
 
+    fn push_small_token(&mut self, current_character: char, peek: Option<char>) {
+        if let Some(kind) = TokenKind::create_grammar_token(&current_character, peek.as_ref()) {
+            self.start_token(kind.clone(), Some(current_character));
+
+            if TokenKind::get_grammar_token_length(&kind) > 1 {
+                self.token_content.push(peek.unwrap());
+                self.source.next(); // consume
+            }
+            self.push_token();
+        }
+        // TODO(Chloe): Error here
+    }
+
     fn reset_token_state(&mut self) {
         self.token_start_position = None;
         self.token_inferred_kind = None;
         self.token_content = String::new();
     }
 
+    fn peek(&mut self) -> Option<char> {
+        self.source.clone().next()
+    }
+
     pub fn lex(&mut self) {
         while let Some(current_character) = self.source.next() {
             if self.token_inferred_kind.is_none() {
                 // Find a new token to infer
-                self.infer_token(&current_character)
-            } else {
-                // Finish the current token
+                self.infer_token(current_character)
             }
+            // The check to see if we have an inferenced token is going to be here because it would
+            // stop duplicate code checking if a token needs to end :)
             if current_character == '\n' {
                 self.current_position.newline();
             }
@@ -85,5 +102,60 @@ impl<'lexer> Lexer<'lexer> {
         }
     }
 
-    fn infer_token(&mut self, _current_character: &char) {}
+    fn infer_token(&mut self, current_character: char) {
+        match current_character {
+            '"' => {
+                self.start_token(
+                    TokenKind::Literal(LiteralKind::Str(String::new())),
+                    Some('"'),
+                );
+            }
+            '\'' => {
+                self.start_token(TokenKind::Literal(LiteralKind::Char('\0')), Some('\''));
+            }
+            '-' => {
+                let peek = self.peek();
+                if peek.is_some_and(|x| x.is_ascii_digit()) {
+                    self.start_token(TokenKind::Literal(LiteralKind::Int8(0)), Some('-'));
+                    return;
+                }
+                self.push_small_token(current_character, peek);
+            }
+            '.' => {
+                let peek = self.peek();
+                if peek.is_some_and(|x| x.is_ascii_digit()) {
+                    self.start_token(TokenKind::Literal(LiteralKind::Float32(0.0)), Some('-'));
+                    return;
+                }
+                self.push_small_token(current_character, peek);
+            }
+            _ => {
+                let peek = self.peek();
+                if TokenKind::is_valid_identifier_character(true, &current_character) {
+                    self.start_token(TokenKind::Identifer(String::new()), Some(current_character));
+                    return;
+                }
+
+                if current_character.is_ascii_digit() {
+                    self.start_token(
+                        TokenKind::Literal(LiteralKind::Int8(0)),
+                        Some(current_character),
+                    );
+                    return;
+                }
+
+                if let Some(grammar_token) =
+                    TokenKind::create_grammar_token(&current_character, peek.as_ref())
+                {
+                    self.start_token(grammar_token.clone(), Some(current_character));
+                    if grammar_token.get_grammar_token_length() > 1 {
+                        self.token_content.push(peek.unwrap());
+                        self.source.next();
+                    }
+                    self.push_token();
+                }
+                // Error: disallowed character
+            }
+        }
+    }
 }

@@ -135,6 +135,15 @@ impl TokenKind {
             _ => 1,
         }
     }
+
+    /// Checks if a provided the provided [char] is a valid identifier character. The [bool]
+    /// parameter should be true if this is the first [char] in the identifier
+    pub fn is_valid_identifier_character(start: bool, character: &char) -> bool {
+        if start && character.is_ascii_digit() {
+            return true;
+        }
+        character.is_alphabetic() || *character == '_'
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
