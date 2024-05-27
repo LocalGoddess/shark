@@ -140,9 +140,13 @@ impl TokenKind {
     /// parameter should be true if this is the first [char] in the identifier
     pub fn is_valid_identifier_character(start: bool, character: &char) -> bool {
         if start && character.is_ascii_digit() {
-            return true;
+            return false;
         }
         character.is_alphabetic() || *character == '_'
+    }
+
+    pub fn is_valid_numeric_character(character: &char) -> bool {
+        Self::is_valid_identifier_character(false, character) || *character == '.'
     }
 }
 
@@ -172,8 +176,8 @@ pub enum KeywordKind {
 
 impl KeywordKind {
     /// Attempts to create a keyword based on the string inputted
-    pub fn create_keyword(identifier: String) -> Option<Self> {
-        match identifier.as_str() {
+    pub fn create_keyword(identifier: &str) -> Option<Self> {
+        match identifier {
             "else" => Some(Self::Else),
             "enum" => Some(Self::Enum),
             "for" => Some(Self::For),

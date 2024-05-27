@@ -4,7 +4,7 @@ pub mod macros;
 use std::{path::Path, str::Chars};
 
 use shark_core::source::SourcePosition;
-use token::{LexerToken, LiteralKind, TokenKind};
+use token::{KeywordKind, LexerToken, LiteralKind, TokenKind};
 
 pub mod error;
 pub mod token;
@@ -74,7 +74,7 @@ impl<'lexer> Lexer<'lexer> {
             }
             self.push_token();
         }
-        // TODO(Chloe): Error here
+        todo!("error here");
     }
 
     fn reset_token_state(&mut self) {
@@ -95,6 +95,7 @@ impl<'lexer> Lexer<'lexer> {
             }
             // The check to see if we have an inferenced token is going to be here because it would
             // stop duplicate code checking if a token needs to end :)
+            self.continue_token(&current_character);
             if current_character == '\n' {
                 self.current_position.newline();
             }
@@ -154,7 +155,83 @@ impl<'lexer> Lexer<'lexer> {
                     }
                     self.push_token();
                 }
-                // Error: disallowed character
+                todo!("error: disallowed character")
+            }
+        }
+    }
+
+    fn continue_token(&mut self, character: &char) {
+        if self.token_inferred_kind.is_none() {
+            return;
+        }
+        self.token_content.push(*character);
+
+        let inferred_kind = self.token_inferred_kind.clone().unwrap();
+        match inferred_kind {
+            TokenKind::Identifer(_) => {
+                if !TokenKind::is_valid_identifier_character(false, self.peek().get_or_insert('\0'))
+                {
+                    if let Some(boolean_literal) =
+                        LiteralKind::into_boolean_literal(&self.token_content)
+                    {
+                        self.token_inferred_kind = Some(TokenKind::Literal(boolean_literal));
+                        self.push_token();
+                        return;
+                    }
+
+                    if let Some(keyword) = KeywordKind::create_keyword(&self.token_content) {
+                        self.token_inferred_kind = Some(TokenKind::Keyword(keyword));
+                    } else {
+                        self.token_inferred_kind =
+                            Some(TokenKind::Identifer(self.token_content.clone()));
+                    }
+                    self.push_token();
+                }
+            }
+            // Int8 is used as the defacto unknown number marker for integers
+            // Float32 is used as the defacto unknown number marker for floats
+            TokenKind::Literal(LiteralKind::Int8(_))
+            | TokenKind::Literal(LiteralKind::Float32(_)) => {
+                if !TokenKind::is_valid_numeric_character(self.peek().get_or_insert('\0')) {
+                    let numeric_literal =
+                        match LiteralKind::into_numeric_literal(&self.token_content) {
+                            Ok(x) => x,
+                            Err(_err) => todo!("Do implement this error message"),
+                        };
+                    self.token_inferred_kind = Some(TokenKind::Literal(numeric_literal));
+                    self.push_token();
+                }
+            }
+            TokenKind::Literal(LiteralKind::Str(_)) => {
+                let peek = match self.peek() {
+                    Some(x) => x,
+                    None => todo!("error here, unexpected end to a token"),
+                };
+                if peek == '"' && *character != '\\' {
+                    self.token_inferred_kind = Some(TokenKind::Literal(
+                        LiteralKind::into_string_literal(&self.token_content),
+                    ));
+                    self.push_token();
+                }
+            }
+            TokenKind::Literal(LiteralKind::Char(_)) => {
+                let peek = match self.peek() {
+                    Some(x) => x,
+                    None => todo!("error here, unexpected end to a token"),
+                };
+                if peek == '\'' && *character != '\\' {
+                    let character_literal =
+                        match LiteralKind::into_char_literal(&self.token_content) {
+                            Ok(x) => x,
+                            Err(_err) => todo!("implement the error message here"),
+                        };
+                    self.token_inferred_kind = Some(TokenKind::Literal(character_literal));
+                    self.push_token();
+                }
+            }
+
+            _ => {
+                todo!("maybe error here? Although this branch is unreachable - i think")
             }
         }
     }
