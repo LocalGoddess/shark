@@ -19,7 +19,7 @@ pub struct LexerToken<'token> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
-    Identifer(String),
+    Identifier(String),
     Keyword(KeywordKind),
     Literal(LiteralKind),
 
@@ -142,7 +142,7 @@ impl TokenKind {
         if start && character.is_ascii_digit() {
             return false;
         }
-        character.is_alphabetic() || *character == '_'
+        character.is_alphabetic() || *character == '_' || character.is_ascii_digit()
     }
 
     pub fn is_valid_numeric_character(character: &char) -> bool {

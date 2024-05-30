@@ -9,6 +9,9 @@ use token::{KeywordKind, LexerToken, LiteralKind, TokenKind};
 pub mod error;
 pub mod token;
 
+#[cfg(test)]
+pub mod test;
+
 #[derive(Debug)]
 pub struct Lexer<'lexer> {
     // Basic Lexer State
@@ -73,6 +76,7 @@ impl<'lexer> Lexer<'lexer> {
                 self.source.next(); // consume
             }
             self.push_token();
+            return;
         }
         todo!("error here");
     }
@@ -108,16 +112,16 @@ impl<'lexer> Lexer<'lexer> {
             '"' => {
                 self.start_token(
                     TokenKind::Literal(LiteralKind::Str(String::new())),
-                    Some('"'),
+                    None
                 );
             }
             '\'' => {
-                self.start_token(TokenKind::Literal(LiteralKind::Char('\0')), Some('\''));
+                self.start_token(TokenKind::Literal(LiteralKind::Char('\0')), None);
             }
             '-' => {
                 let peek = self.peek();
                 if peek.is_some_and(|x| x.is_ascii_digit()) {
-                    self.start_token(TokenKind::Literal(LiteralKind::Int8(0)), Some('-'));
+                    self.start_token(TokenKind::Literal(LiteralKind::Int8(0)), None);
                     return;
                 }
                 self.push_small_token(current_character, peek);
@@ -125,22 +129,30 @@ impl<'lexer> Lexer<'lexer> {
             '.' => {
                 let peek = self.peek();
                 if peek.is_some_and(|x| x.is_ascii_digit()) {
-                    self.start_token(TokenKind::Literal(LiteralKind::Float32(0.0)), Some('-'));
+                    self.start_token(TokenKind::Literal(LiteralKind::Float32(0.0)), None);
                     return;
                 }
                 self.push_small_token(current_character, peek);
-            }
+            },
+
+            ' ' => {
+            },
+            '\n' => {
+            },
             _ => {
                 let peek = self.peek();
                 if TokenKind::is_valid_identifier_character(true, &current_character) {
-                    self.start_token(TokenKind::Identifer(String::new()), Some(current_character));
+                    self.start_token(
+                        TokenKind::Identifier(String::new()),
+                        None,
+                    );
                     return;
                 }
 
                 if current_character.is_ascii_digit() {
                     self.start_token(
                         TokenKind::Literal(LiteralKind::Int8(0)),
-                        Some(current_character),
+                        None,
                     );
                     return;
                 }
@@ -154,6 +166,7 @@ impl<'lexer> Lexer<'lexer> {
                         self.source.next();
                     }
                     self.push_token();
+                    return;
                 }
                 todo!("error: disallowed character")
             }
@@ -168,7 +181,7 @@ impl<'lexer> Lexer<'lexer> {
 
         let inferred_kind = self.token_inferred_kind.clone().unwrap();
         match inferred_kind {
-            TokenKind::Identifer(_) => {
+            TokenKind::Identifier(_) => {
                 if !TokenKind::is_valid_identifier_character(false, self.peek().get_or_insert('\0'))
                 {
                     if let Some(boolean_literal) =
@@ -183,7 +196,7 @@ impl<'lexer> Lexer<'lexer> {
                         self.token_inferred_kind = Some(TokenKind::Keyword(keyword));
                     } else {
                         self.token_inferred_kind =
-                            Some(TokenKind::Identifer(self.token_content.clone()));
+                            Some(TokenKind::Identifier(self.token_content.clone()));
                     }
                     self.push_token();
                 }
@@ -212,6 +225,7 @@ impl<'lexer> Lexer<'lexer> {
                         LiteralKind::into_string_literal(&self.token_content),
                     ));
                     self.push_token();
+                    self.source.next(); // consume
                 }
             }
             TokenKind::Literal(LiteralKind::Char(_)) => {
@@ -227,6 +241,7 @@ impl<'lexer> Lexer<'lexer> {
                         };
                     self.token_inferred_kind = Some(TokenKind::Literal(character_literal));
                     self.push_token();
+                    self.source.next(); // consume
                 }
             }
 
