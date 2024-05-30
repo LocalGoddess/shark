@@ -1,4 +1,8 @@
-use crate::{token::{LexerToken, KeywordKind, LiteralKind}, token::TokenKind, Lexer};
+use crate::{
+    token::TokenKind,
+    token::{KeywordKind, LexerToken, LiteralKind},
+    Lexer,
+};
 
 fn verify_tokens(returned_tokens: &Vec<LexerToken>, expected_tokens: &Vec<TokenKind>) -> bool {
     if returned_tokens.len() != expected_tokens.len() {
@@ -38,8 +42,10 @@ fn test_keyword() {
 fn test_literal_str() {
     let mut lexer = Lexer::new(None, "\"Hello, World\"");
     lexer.lex();
-    
-    let expected_tokens = vec![TokenKind::Literal(LiteralKind::Str("Hello, World".to_string()))];
+
+    let expected_tokens = vec![TokenKind::Literal(LiteralKind::Str(
+        "Hello, World".to_string(),
+    ))];
     assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
@@ -56,8 +62,10 @@ fn test_literal_char() {
 fn test_escapes() {
     let mut lexer = Lexer::new(None, "\"\\n \\t \\\\ \\u{263A}\"");
     lexer.lex();
-    
-    let expected_tokens = vec![TokenKind::Literal(LiteralKind::Str("\n \t \\ \u{263A}".to_string()))];
+
+    let expected_tokens = vec![TokenKind::Literal(LiteralKind::Str(
+        "\n \t \\ \u{263A}".to_string(),
+    ))];
     assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
@@ -74,8 +82,14 @@ fn test_literal_bool() {
 fn test_literal_numerics() {
     let mut lexer = Lexer::new(None, "-1337 1337 -3.14 3.14 132uint8");
     lexer.lex();
-    
-    let expected_tokens = vec![TokenKind::Literal(LiteralKind::Int32(-1337)), TokenKind::Literal(LiteralKind::Int32(1337)), TokenKind::Literal(LiteralKind::Float32(-3.14)), TokenKind::Literal(LiteralKind::Float32(3.14)), TokenKind::Literal(LiteralKind::UInt8(132))];
+
+    let expected_tokens = vec![
+        TokenKind::Literal(LiteralKind::Int32(-1337)),
+        TokenKind::Literal(LiteralKind::Int32(1337)),
+        TokenKind::Literal(LiteralKind::Float32(-3.14)),
+        TokenKind::Literal(LiteralKind::Float32(3.14)),
+        TokenKind::Literal(LiteralKind::UInt8(132)),
+    ];
     assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
@@ -83,8 +97,13 @@ fn test_literal_numerics() {
 fn test_grammar() {
     let mut lexer = Lexer::new(None, "; - -= ::");
     lexer.lex();
-    
-    let expected_tokens = vec![TokenKind::EOL, TokenKind::Minus, TokenKind::MinusAssign, TokenKind::TypeAssign];
+
+    let expected_tokens = vec![
+        TokenKind::EOL,
+        TokenKind::Minus,
+        TokenKind::MinusAssign,
+        TokenKind::TypeAssign,
+    ];
     assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
@@ -124,4 +143,3 @@ fn test_condensed() {
     ];
     assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
-

@@ -110,10 +110,7 @@ impl<'lexer> Lexer<'lexer> {
     fn infer_token(&mut self, current_character: char) {
         match current_character {
             '"' => {
-                self.start_token(
-                    TokenKind::Literal(LiteralKind::Str(String::new())),
-                    None
-                );
+                self.start_token(TokenKind::Literal(LiteralKind::Str(String::new())), None);
             }
             '\'' => {
                 self.start_token(TokenKind::Literal(LiteralKind::Char('\0')), None);
@@ -133,27 +130,19 @@ impl<'lexer> Lexer<'lexer> {
                     return;
                 }
                 self.push_small_token(current_character, peek);
-            },
+            }
 
-            ' ' => {
-            },
-            '\n' => {
-            },
+            ' ' => {}
+            '\n' => {}
             _ => {
                 let peek = self.peek();
                 if TokenKind::is_valid_identifier_character(true, &current_character) {
-                    self.start_token(
-                        TokenKind::Identifier(String::new()),
-                        None,
-                    );
+                    self.start_token(TokenKind::Identifier(String::new()), None);
                     return;
                 }
 
                 if current_character.is_ascii_digit() {
-                    self.start_token(
-                        TokenKind::Literal(LiteralKind::Int8(0)),
-                        None,
-                    );
+                    self.start_token(TokenKind::Literal(LiteralKind::Int8(0)), None);
                     return;
                 }
 
