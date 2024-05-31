@@ -12,15 +12,16 @@ pub mod token;
 #[cfg(test)]
 pub mod test;
 
+/// Step one of compilation. Turns the written code into [LexerToken]s to be used by the parser
 #[derive(Debug)]
 pub struct Lexer<'lexer> {
-    // Basic Lexer State
+    /// Basic Lexer State
     pub source: Chars<'lexer>,
     pub source_length: usize,
     pub current_position: SourcePosition<'lexer>,
     pub completed_tokens: Vec<LexerToken<'lexer>>,
 
-    // Current Token State
+    /// Current Token State
     pub token_start_position: Option<SourcePosition<'lexer>>,
     pub token_content: String,
     pub token_inferred_kind: Option<TokenKind>,

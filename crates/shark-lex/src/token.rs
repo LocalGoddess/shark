@@ -136,7 +136,7 @@ impl TokenKind {
         }
     }
 
-    /// Checks if a provided the provided [char] is a valid identifier character. The [bool]
+    /// Checks if the provided [char] is a valid identifier character. The [bool]
     /// parameter should be true if this is the first [char] in the identifier
     pub fn is_valid_identifier_character(start: bool, character: &char) -> bool {
         if start && character.is_ascii_digit() {
@@ -144,7 +144,8 @@ impl TokenKind {
         }
         character.is_alphabetic() || *character == '_' || character.is_ascii_digit()
     }
-
+    
+    /// Checks if a provided [char] is a valid numeric character
     pub fn is_valid_numeric_character(character: &char) -> bool {
         Self::is_valid_identifier_character(false, character) || *character == '.'
     }
