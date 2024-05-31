@@ -143,3 +143,17 @@ fn test_condensed() {
     ];
     assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
+
+#[test]
+fn test_comment() {
+    let mut lexer = Lexer::new(None, "1// hello \n+// hello\n1");
+    lexer.lex();
+
+    dbg!(&lexer.completed_tokens);
+    let expected_tokens = vec![
+        TokenKind::Literal(LiteralKind::Int32(1)),
+        TokenKind::Plus,
+        TokenKind::Literal(LiteralKind::Int32(1)),
+    ];
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
+}

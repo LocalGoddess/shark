@@ -4,7 +4,7 @@ pub mod macros;
 use std::{path::Path, str::Chars};
 
 use shark_core::source::SourcePosition;
-use token::{KeywordKind, LexerToken, LiteralKind, TokenKind};
+use token::{CommentKind, KeywordKind, LexerToken, LiteralKind, TokenKind};
 
 pub mod error;
 pub mod token;
@@ -24,6 +24,8 @@ pub struct Lexer<'lexer> {
     pub token_start_position: Option<SourcePosition<'lexer>>,
     pub token_content: String,
     pub token_inferred_kind: Option<TokenKind>,
+
+    pub in_comment: Option<CommentKind>,
 }
 
 impl<'lexer> Lexer<'lexer> {
@@ -37,6 +39,8 @@ impl<'lexer> Lexer<'lexer> {
             token_start_position: None,
             token_content: String::new(),
             token_inferred_kind: None,
+
+            in_comment: None,
         }
     }
 
@@ -93,6 +97,11 @@ impl<'lexer> Lexer<'lexer> {
 
     pub fn lex(&mut self) {
         while let Some(current_character) = self.source.next() {
+            if self.in_comment.is_some() {
+                self.handle_comment(current_character);
+                continue;
+            }
+
             if self.token_inferred_kind.is_none() {
                 // Find a new token to infer
                 self.infer_token(current_character)
@@ -104,6 +113,25 @@ impl<'lexer> Lexer<'lexer> {
                 self.current_position.newline();
             }
             self.current_position.next_column();
+        }
+    }
+
+    fn handle_comment(&mut self, current_character: char) {
+        match self.in_comment {
+            Some(CommentKind::SingleLine) => {
+                if current_character == '\n' {
+                    self.in_comment = None;
+                }
+            }
+            Some(CommentKind::MultiLine) => {
+                if let Some(peek) = self.peek() {
+                    if current_character == '*' && peek == '/' {
+                        self.in_comment = None;
+                        self.source.next(); // conusme the slash
+                    }
+                }
+            }
+            None => {}
         }
     }
 
@@ -130,6 +158,35 @@ impl<'lexer> Lexer<'lexer> {
                     return;
                 }
                 self.push_small_token(current_character, peek);
+            }
+            '/' => {
+                if let Some(peek) = self.peek() {
+                    match peek {
+                        '/' => {
+                            self.in_comment = Some(CommentKind::SingleLine);
+                            self.source.next();
+                            return;
+                        }
+                        '*' => {
+                            self.in_comment = Some(CommentKind::MultiLine);
+                            self.source.next();
+                            return;
+                        }
+                        _ => {}
+                    }
+                }
+
+                let peek = self.peek();
+                if let Some(grammar_token) =
+                    TokenKind::create_grammar_token(&current_character, peek.as_ref())
+                {
+                    self.start_token(grammar_token.clone(), Some(current_character));
+                    if grammar_token.get_grammar_token_length() > 1 {
+                        self.token_content.push(peek.unwrap());
+                        self.source.next();
+                    }
+                    self.push_token();
+                }
             }
 
             ' ' => {}

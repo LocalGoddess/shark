@@ -377,3 +377,9 @@ impl LiteralKind {
         }
     }
 }
+
+#[derive(Debug)]
+pub enum CommentKind {
+    SingleLine,
+    MultiLine,
+}
