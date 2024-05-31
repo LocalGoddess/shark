@@ -116,9 +116,10 @@ impl<'lexer> Lexer<'lexer> {
             // stop duplicate code checking if a token needs to end :)
             self.continue_token(&current_character);
             if current_character == '\n' {
-                self.current_position.newline();
+                self.current_position.next_line();
+            } else {
+                self.current_position.next_column();
             }
-            self.current_position.next_column();
         }
     }
 

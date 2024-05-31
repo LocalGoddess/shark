@@ -33,14 +33,6 @@ impl<'position> SourcePosition<'position> {
         self.column = 1;
     }
 
-    /// Increases the line number by one and sets the column to zero
-    /// Note: This function does not check to see if the line number is valid and it is up to the
-    /// user to make sure the column gets incremented properly
-    pub fn newline(&mut self) {
-        self.line += 1;
-        self.column = 0;
-    }
-
     // This is done because [std::iter::Step] is currently in nightly. When that reaches full release
     // this will be removed
     pub fn into_iter(
