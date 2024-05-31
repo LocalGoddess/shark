@@ -4,6 +4,7 @@ use crate::{
     Lexer,
 };
 
+/// Verifies that the order and kind of tokens supplied is what is expected
 fn verify_tokens(returned_tokens: &Vec<LexerToken>, expected_tokens: &Vec<TokenKind>) -> bool {
     if returned_tokens.len() != expected_tokens.len() {
         return false;
@@ -159,7 +160,7 @@ fn test_comment() {
 
 #[test]
 fn test_multiline_comment() {
-    let mut lexer = Lexer::new(None, "1/* hello */+/* hello */1");
+    let mut lexer = Lexer::new(None, "1/* hello \n*/+/* hello */1");
     lexer.lex();
 
     let expected_tokens = vec![

@@ -44,6 +44,7 @@ impl<'lexer> Lexer<'lexer> {
         }
     }
 
+    /// Creates the initial state when finding a [LexerToken]
     fn start_token(&mut self, kind: TokenKind, initial_data: Option<char>) {
         self.token_inferred_kind = Some(kind);
         self.token_start_position = Some(self.current_position);
@@ -52,6 +53,8 @@ impl<'lexer> Lexer<'lexer> {
         }
     }
 
+    /// Finish the active [LexerToken] and adds it to the [Vec] of completed tokens. Then it resets
+    /// the state of the [Lexer]
     fn push_token(&mut self) {
         if self.token_inferred_kind.is_none() {
             panic!("invalid lexer state to push a token"); // See above comment
@@ -71,6 +74,8 @@ impl<'lexer> Lexer<'lexer> {
         self.reset_token_state();
     }
 
+    /// Creates then pushes a "small token", that is any token which is 1-2 characters in length.
+    /// This will also reset the state of the [Lexer]
     fn push_small_token(&mut self, current_character: char, peek: Option<char>) {
         if let Some(kind) = TokenKind::create_grammar_token(&current_character, peek.as_ref()) {
             self.start_token(kind.clone(), Some(current_character));
@@ -99,7 +104,7 @@ impl<'lexer> Lexer<'lexer> {
         while let Some(current_character) = self.source.next() {
             if self.in_comment.is_some() {
                 self.handle_comment(current_character);
-                continue;
+                continue; // If we are in a comment we want to avoid starting new tokens
             }
 
             if self.token_inferred_kind.is_none() {
@@ -116,6 +121,7 @@ impl<'lexer> Lexer<'lexer> {
         }
     }
 
+    /// Logic for checking when we need to exit a comment
     fn handle_comment(&mut self, current_character: char) {
         match self.in_comment {
             Some(CommentKind::SingleLine) => {
