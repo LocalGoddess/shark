@@ -112,6 +112,40 @@ fn test_integer_radix() {
 }
 
 #[test]
+fn test_integer_radix_with_suffix() {
+    let mut lexer = Lexer::new(None, "0xFuint32");
+    lexer.lex();
+
+    let kind = &lexer
+        .completed_tokens
+        .get(0)
+        .expect("Lexer did not parse anything")
+        .kind;
+    if let TokenKind::Literal(LiteralKind::UInt32(literal)) = kind {
+        assert_eq!(*literal, 15);
+        return;
+    }
+    assert!(false);
+}
+
+#[test]
+fn test_integer_radix_with_suffix_and_negative() {
+    let mut lexer = Lexer::new(None, "-0xFint64");
+    lexer.lex();
+
+    let kind = &lexer
+        .completed_tokens
+        .get(0)
+        .expect("Lexer did not parse anything")
+        .kind;
+    if let TokenKind::Literal(LiteralKind::Int64(literal)) = kind {
+        assert_eq!(*literal, -15);
+        return;
+    }
+    assert!(false);
+}
+
+#[test]
 fn test_grammar() {
     let mut lexer = Lexer::new(None, "; - -= ::");
     lexer.lex();

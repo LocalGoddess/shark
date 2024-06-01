@@ -254,7 +254,7 @@ impl LiteralKind {
         let mut previous = '\0';
 
         for (index, character) in working_content.char_indices() {
-            if character.is_ascii_hexdigit() {
+            if character.is_ascii_hexdigit() || character == '-' || character == '.' {
                 numeric_end = index + 1;
             } else {
                 // HACK: specifically check for float
