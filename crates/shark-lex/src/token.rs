@@ -248,6 +248,30 @@ impl LiteralKind {
         (radix, is_negative)
     }
 
+    fn get_literal_number_suffix(working_content: &str) -> (Option<&str>, usize) {
+        let mut suffix_start = None;
+        let mut numeric_end = 0;
+        let mut previous = '\0';
+
+        for (index, character) in working_content.char_indices() {
+            if character.is_ascii_hexdigit() {
+                numeric_end = index + 1;
+            } else {
+                // HACK: specifically check for float
+                let real_index = if character == 'l' && previous == 'f' {
+                    numeric_end -= 1;
+                    index - 1
+                } else {
+                    index
+                };
+                suffix_start = Some(real_index);
+                break;
+            }
+            previous = character;
+        }
+        (suffix_start.map(|x| &working_content[x..]), numeric_end)
+    }
+
     /// Converts a token's working_content to a numeric [LiteralKind]
     /// If this function is supplied something other than a number, it will probably break so its
     /// up to the caller to make sure the incoming content is a number.
@@ -265,59 +289,59 @@ impl LiteralKind {
             working_content.to_owned()
         };
 
-        for (index, c) in actual_number.chars().enumerate() {
-            if !c.is_ascii_digit() && c != '-' && c != '.' {
-                let suffix = &actual_number[index..];
-                let numeric_part = &actual_number[0..index];
+        let extracted = Self::get_literal_number_suffix(&actual_number);
+        if let Some(suffix) = extracted.0 {
+            let numeric_part = &actual_number[..extracted.1];
+            return match suffix {
+                "uint8" => Ok(LiteralKind::UInt8(u8::from_str_radix(numeric_part, radix)?)),
+                "int8" => Ok(LiteralKind::Int8(i8::from_str_radix(numeric_part, radix)?)),
+                "uint32" => Ok(LiteralKind::UInt32(u32::from_str_radix(
+                    numeric_part,
+                    radix,
+                )?)),
+                "int32" => Ok(LiteralKind::Int32(i32::from_str_radix(
+                    numeric_part,
+                    radix,
+                )?)),
+                "uint64" => Ok(LiteralKind::UInt64(u64::from_str_radix(
+                    numeric_part,
+                    radix,
+                )?)),
+                "int64" => Ok(LiteralKind::Int64(i64::from_str_radix(
+                    numeric_part,
+                    radix,
+                )?)),
 
-                return match suffix {
-                    "uint8" => Ok(LiteralKind::UInt8(u8::from_str_radix(numeric_part, radix)?)),
-                    "int8" => Ok(LiteralKind::Int8(i8::from_str_radix(numeric_part, radix)?)),
-                    "uint32" => Ok(LiteralKind::UInt32(u32::from_str_radix(
-                        numeric_part,
-                        radix,
-                    )?)),
-                    "int32" => Ok(LiteralKind::Int32(i32::from_str_radix(
-                        numeric_part,
-                        radix,
-                    )?)),
-                    "uint64" => Ok(LiteralKind::UInt64(u64::from_str_radix(
-                        numeric_part,
-                        radix,
-                    )?)),
-                    "int64" => Ok(LiteralKind::Int64(i64::from_str_radix(
-                        numeric_part,
-                        radix,
-                    )?)),
-
-                    // Only allow base 10 in float literals
-                    "float32" => {
-                        if radix != 10 {
-                            Err(Box::new(InvalidFloatRadix))
-                        } else {
-                            Ok(LiteralKind::Float32(numeric_part.parse::<f32>()?))
-                        }
+                // Only allow base 10 in float literals
+                "float32" => {
+                    if radix != 10 {
+                        Err(Box::new(InvalidFloatRadix))
+                    } else {
+                        Ok(LiteralKind::Float32(numeric_part.parse::<f32>()?))
                     }
-                    "float64" => {
-                        if radix != 10 {
-                            Err(Box::new(InvalidFloatRadix))
-                        } else {
-                            Ok(LiteralKind::Float64(numeric_part.parse::<f64>()?))
-                        }
+                }
+                "float64" => {
+                    if radix != 10 {
+                        Err(Box::new(InvalidFloatRadix))
+                    } else {
+                        Ok(LiteralKind::Float64(numeric_part.parse::<f64>()?))
                     }
-                    _ => Err(Box::new(UnknownNumericSuffixError {
-                        invalid_suffix: suffix.to_string(),
-                    })),
-                };
-            }
+                }
+                _ => Err(Box::new(UnknownNumericSuffixError {
+                    invalid_suffix: suffix.to_string(),
+                })),
+            };
         }
 
         // If no suffix is specified, just default to a Float32 for decimal numbers and Int32 for
         // whole numbers
         if actual_number.contains('.') {
-            Ok(LiteralKind::Float32(working_content.parse::<f32>()?))
+            Ok(LiteralKind::Float32(actual_number.parse::<f32>()?))
         } else {
-            Ok(LiteralKind::Int32(working_content.parse::<i32>()?))
+            Ok(LiteralKind::Int32(i32::from_str_radix(
+                &actual_number,
+                radix,
+            )?))
         }
     }
 

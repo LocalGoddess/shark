@@ -10,7 +10,7 @@ pub mod error;
 pub mod token;
 
 #[cfg(test)]
-pub mod test;
+pub mod tests;
 
 /// Step one of compilation. Turns the written code into [LexerToken]s to be used by the parser
 #[derive(Debug)]

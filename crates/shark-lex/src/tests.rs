@@ -99,10 +99,14 @@ fn test_integer_radix() {
     let mut lexer = Lexer::new(None, "0xF");
     lexer.lex();
 
-    let kind = &lexer.completed_tokens.get(0).expect("Lexer did not parse anything").kind;
-    dbg!(kind);
+    let kind = &lexer
+        .completed_tokens
+        .get(0)
+        .expect("Lexer did not parse anything")
+        .kind;
     if let TokenKind::Literal(LiteralKind::Int32(literal)) = kind {
-        assert_eq!(*literal, 63);
+        assert_eq!(*literal, 15);
+        return;
     }
     assert!(false);
 }
