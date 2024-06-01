@@ -1,7 +1,8 @@
 [package]
 name = "shark-lex"
-version = "0.0.0"
-edition = "2021"
+description = "Library for the Lexer and its related parts"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-shark-error = { path = "../shark-error" }
+shark-core = { path = "../shark-core" }

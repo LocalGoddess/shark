@@ -1,175 +1,223 @@
-use crate::{lexer::Lexer, LexerToken, TokenKind};
+use crate::{
+    token::TokenKind,
+    token::{KeywordKind, LexerToken, LiteralKind},
+    Lexer,
+};
 
-/// For use when testing single tokens to make sure they are what they are suppose to be
-fn check_correct_token(tokens: &Vec<LexerToken>, expected_kind: TokenKind) -> bool {
-    if tokens.len() != 1 {
+/// Verifies that the order and kind of tokens supplied is what is expected
+fn verify_tokens(returned_tokens: &Vec<LexerToken>, expected_tokens: &Vec<TokenKind>) -> bool {
+    if returned_tokens.len() != expected_tokens.len() {
         return false;
     }
-    tokens.get(0).unwrap().kind == expected_kind
-}
-
-fn check_correct_token_order(tokens: &Vec<LexerToken>, expected: &Vec<TokenKind>) -> bool {
-    for (index, token) in tokens.iter().enumerate() {
-        if let Some(expected_token) = expected.get(index) {
-            if token.kind != *expected_token {
-                return false;
-            }
-        } else {
+    for (index, token) in returned_tokens.iter().enumerate() {
+        let expected = expected_tokens.get(index).unwrap(); // These are the same length so its
+                                                            // fine
+        if token.kind != *expected {
             return false;
         }
     }
-    true
-}
-
-fn _debug_token(tokens: &Vec<LexerToken>, position: usize) {
-    if let Some(token) = tokens.get(position) {
-        dbg!(token);
-    } else {
-        println!("Token at {} doesn't exist", position);
-    }
+    return true;
 }
 
 #[test]
 fn test_identifier() {
-    let mut lexer = Lexer::new(None, "this_is_a_crazy_identifier111");
-    let tokens = lexer.lex();
-    assert!(check_correct_token(
-        &tokens,
-        TokenKind::Identifier("this_is_a_crazy_identifier111".to_owned())
-    ))
+    let mut lexer = Lexer::new(None, "this_is_a_crazy_identifier8080");
+    lexer.lex();
+
+    let expected = vec![TokenKind::Identifier(
+        "this_is_a_crazy_identifier8080".to_string(),
+    )];
+    assert!(verify_tokens(&lexer.completed_tokens, &expected))
 }
 
 #[test]
 fn test_keyword() {
     let mut lexer = Lexer::new(None, "fun");
-    let tokens = lexer.lex();
-    assert!(check_correct_token(
-        &tokens,
-        TokenKind::Keyword(crate::KeywordKind::Fun)
-    ))
+    lexer.lex();
+
+    let expected_tokens = vec![TokenKind::Keyword(KeywordKind::Fun)];
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
 #[test]
 fn test_literal_str() {
     let mut lexer = Lexer::new(None, "\"Hello, World\"");
-    let tokens = lexer.lex();
-    assert!(check_correct_token(
-        &tokens,
-        TokenKind::Literal(crate::LiteralKind::Str("Hello, World".to_owned()))
-    ));
+    lexer.lex();
+
+    let expected_tokens = vec![TokenKind::Literal(LiteralKind::Str(
+        "Hello, World".to_string(),
+    ))];
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
 #[test]
 fn test_literal_char() {
     let mut lexer = Lexer::new(None, "'h'");
-    let tokens = lexer.lex();
-    assert!(check_correct_token(
-        &tokens,
-        TokenKind::Literal(crate::LiteralKind::Char("h".to_owned()))
-    )); // Holy shit the parenths
+    lexer.lex();
+
+    let expected_tokens = vec![TokenKind::Literal(LiteralKind::Char('h'))];
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
+}
+
+#[test]
+fn test_escapes() {
+    let mut lexer = Lexer::new(None, "\"\\n \\t \\\\ \\u{263A}\"");
+    lexer.lex();
+
+    let expected_tokens = vec![TokenKind::Literal(LiteralKind::Str(
+        "\n \t \\ \u{263A}".to_string(),
+    ))];
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
 #[test]
 fn test_literal_bool() {
-    let mut lexer = Lexer::new(None, "true");
-    let tokens = lexer.lex();
-    assert!(check_correct_token(
-        &tokens,
-        TokenKind::Literal(crate::LiteralKind::Boolean(true))
-    ));
+    let mut lexer = Lexer::new(None, "false");
+    lexer.lex();
+
+    let expected_tokens = vec![TokenKind::Literal(LiteralKind::Boolean(false))];
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
 #[test]
-fn test_literal_int32() {
-    let mut lexer = Lexer::new(None, "-1337");
-    let tokens = lexer.lex();
-    assert!(check_correct_token(
-        &tokens,
-        TokenKind::Literal(crate::LiteralKind::Int(-1337))
-    ));
+fn test_literal_numerics() {
+    let mut lexer = Lexer::new(None, "-1337 1337 -3.14 3.14 132uint8");
+    lexer.lex();
+
+    let expected_tokens = vec![
+        TokenKind::Literal(LiteralKind::Int32(-1337)),
+        TokenKind::Literal(LiteralKind::Int32(1337)),
+        TokenKind::Literal(LiteralKind::Float32(-3.14)),
+        TokenKind::Literal(LiteralKind::Float32(3.14)),
+        TokenKind::Literal(LiteralKind::UInt8(132)),
+    ];
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
 #[test]
-fn test_literal_float32() {
-    let mut lexer = Lexer::new(None, "-3.14");
-    let tokens = lexer.lex();
-    assert!(check_correct_token(
-        &tokens,
-        TokenKind::Literal(crate::LiteralKind::Float(-3.14))
-    ));
+fn test_integer_radix() {
+    let mut lexer = Lexer::new(None, "0xF");
+    lexer.lex();
+
+    let kind = &lexer
+        .completed_tokens
+        .get(0)
+        .expect("Lexer did not parse anything")
+        .kind;
+    if let TokenKind::Literal(LiteralKind::Int32(literal)) = kind {
+        assert_eq!(*literal, 15);
+        return;
+    }
+    assert!(false);
 }
 
 #[test]
-fn test_single_char_token() {
-    let mut lexer = Lexer::new(None, ";");
-    let tokens = lexer.lex();
-    assert!(check_correct_token(&tokens, TokenKind::EOL));
+fn test_integer_radix_with_suffix() {
+    let mut lexer = Lexer::new(None, "0xFuint32");
+    lexer.lex();
+
+    let kind = &lexer
+        .completed_tokens
+        .get(0)
+        .expect("Lexer did not parse anything")
+        .kind;
+    if let TokenKind::Literal(LiteralKind::UInt32(literal)) = kind {
+        assert_eq!(*literal, 15);
+        return;
+    }
+    assert!(false);
+}
+
+#[test]
+fn test_integer_radix_with_suffix_and_negative() {
+    let mut lexer = Lexer::new(None, "-0xFint64");
+    lexer.lex();
+
+    let kind = &lexer
+        .completed_tokens
+        .get(0)
+        .expect("Lexer did not parse anything")
+        .kind;
+    if let TokenKind::Literal(LiteralKind::Int64(literal)) = kind {
+        assert_eq!(*literal, -15);
+        return;
+    }
+    assert!(false);
+}
+
+#[test]
+fn test_grammar() {
+    let mut lexer = Lexer::new(None, "; - -= ::");
+    lexer.lex();
+
+    let expected_tokens = vec![
+        TokenKind::EOL,
+        TokenKind::Minus,
+        TokenKind::MinusAssign,
+        TokenKind::TypeAssign,
+    ];
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
 #[test]
 fn test_big() {
     let mut lexer = Lexer::new(None, "pub fun main() {\n    let a :: Float32 = 3.14;\n}");
-    let tokens = lexer.lex();
+    lexer.lex();
 
-    let expected = vec![
-        TokenKind::Keyword(crate::KeywordKind::Pub),
-        TokenKind::Keyword(crate::KeywordKind::Fun),
+    let expected_tokens = vec![
+        TokenKind::Keyword(KeywordKind::Pub),
+        TokenKind::Keyword(KeywordKind::Fun),
         TokenKind::Identifier(String::from("main")),
         TokenKind::Parenthesis { opened: true },
         TokenKind::Parenthesis { opened: false },
         TokenKind::CurlyBrace { opened: true },
-        TokenKind::Keyword(crate::KeywordKind::Let),
+        TokenKind::Keyword(KeywordKind::Let),
         TokenKind::Identifier(String::from("a")),
-        TokenKind::Colon,
-        TokenKind::Colon,
+        TokenKind::TypeAssign,
         TokenKind::Identifier(String::from("Float32")),
         TokenKind::Equal,
-        TokenKind::Literal(crate::LiteralKind::Float(3.14)),
+        TokenKind::Literal(LiteralKind::Float32(3.14)),
         TokenKind::EOL,
         TokenKind::CurlyBrace { opened: false },
     ];
-
-    assert!(check_correct_token_order(&tokens, &expected));
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
 #[test]
 fn test_condensed() {
     let mut lexer = Lexer::new(None, "1+1");
-    let tokens = lexer.lex();
+    lexer.lex();
 
-    let expected = vec![
-        TokenKind::Literal(crate::LiteralKind::Int(1)),
+    let expected_tokens = vec![
+        TokenKind::Literal(LiteralKind::Int32(1)),
         TokenKind::Plus,
-        TokenKind::Literal(crate::LiteralKind::Int(1)),
+        TokenKind::Literal(LiteralKind::Int32(1)),
     ];
-
-    assert!(check_correct_token_order(&tokens, &expected));
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
 #[test]
-fn test_line_comments() {
-    let mut lexer = Lexer::new(None, "//1+1\n1+1");
-    let tokens = lexer.lex();
+fn test_comment() {
+    let mut lexer = Lexer::new(None, "1// hello \n+// hello\n1");
+    lexer.lex();
 
-    let expected = vec![
-        TokenKind::Literal(crate::LiteralKind::Int(1)),
+    let expected_tokens = vec![
+        TokenKind::Literal(LiteralKind::Int32(1)),
         TokenKind::Plus,
-        TokenKind::Literal(crate::LiteralKind::Int(1)),
+        TokenKind::Literal(LiteralKind::Int32(1)),
     ];
-
-    assert!(check_correct_token_order(&tokens, &expected));
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
 
 #[test]
-fn test_block_comments() {
-    let mut lexer = Lexer::new(None, "/*1+1\n1+1\n1+1\n1+1\n1+1*/1+1");
-    let tokens = lexer.lex();
+fn test_multiline_comment() {
+    let mut lexer = Lexer::new(None, "1/* hello \n*/+/* hello */1");
+    lexer.lex();
 
-    let expected = vec![
-        TokenKind::Literal(crate::LiteralKind::Int(1)),
+    let expected_tokens = vec![
+        TokenKind::Literal(LiteralKind::Int32(1)),
         TokenKind::Plus,
-        TokenKind::Literal(crate::LiteralKind::Int(1)),
+        TokenKind::Literal(LiteralKind::Int32(1)),
     ];
-
-    assert!(check_correct_token_order(&tokens, &expected));
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
 }
