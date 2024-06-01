@@ -353,7 +353,7 @@ impl LiteralKind {
     }
 
     /// Converts a token's working_content into a [LiteralKind::Str]
-    /// This function assumes the provided content is somewhere near a character       
+    /// This function assumes the provided content is somewhere near a string       
     pub fn into_string_literal(working_content: &str) -> LiteralKind {
         let mut value = working_content.to_string();
 
