@@ -276,6 +276,8 @@ impl LiteralKind {
     /// If this function is supplied something other than a number, it will probably break so its
     /// up to the caller to make sure the incoming content is a number.
     pub fn into_numeric_literal(working_content: &str) -> Result<LiteralKind, Box<dyn Error>> {
+        // In the future, this should be done via a parser like system since we know that a literal
+        // number is just [sign] [radix] [body] [suffix]
         let (radix, is_negative) = Self::get_literal_integer_radix(working_content);
         let actual_number = if radix != 10 {
             let mut result = working_content[if is_negative { 3 } else { 2 }..].to_owned(); // remove this 0x, 0b, or 0o
