@@ -151,59 +151,26 @@ impl TokenKind {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum KeywordKind {
-    Else,
-    Enum,
-    For,
-    Fun,
-    If,
-    In,
-    Let,
-    Mut,
-    Of,
-    Ptr,
-    Pub,
-    Ref,
-    Ret,
-    Trait,
-    Type,
-    Unsafe,
-    Use,
-    When,
-    Where,
-    Yield,
-}
-
-impl KeywordKind {
-    /// Attempts to create a keyword based on the string inputted
-    pub fn create_keyword(identifier: &str) -> Option<Self> {
-        match identifier {
-            "else" => Some(Self::Else),
-            "enum" => Some(Self::Enum),
-            "for" => Some(Self::For),
-            "fun" => Some(Self::Fun),
-            "if" => Some(Self::If),
-            "in" => Some(Self::In),
-            "let" => Some(Self::Let),
-            "mut" => Some(Self::Mut),
-            "of" => Some(Self::Of),
-            "ptr" => Some(Self::Ptr),
-            "pub" => Some(Self::Pub),
-            "ref" => Some(Self::Ref),
-            "ret" => Some(Self::Ret),
-            "trait" => Some(Self::Trait),
-            "type" => Some(Self::Type),
-            "unsafe" => Some(Self::Unsafe),
-            "use" => Some(Self::Use),
-            "when" => Some(Self::When),
-            "where" => Some(Self::Where),
-            "yield" => Some(Self::Yield),
-
-            _ => None,
-        }
-    }
-}
+make_keywords!(Else,
+               Enum,
+               For,
+               Fun,
+               If,
+               In,
+               Let,
+               Mut,
+               Of,
+               Ptr,
+               Pub,
+               Ref,
+               Ret,
+               Trait,
+               Type,
+               Unsafe,
+               Use,
+               When,
+               Where,
+               Yield);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LiteralKind {
