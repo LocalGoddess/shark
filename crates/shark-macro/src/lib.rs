@@ -1,17 +1,10 @@
+use crate::util::IdentifierArray;
+
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, Ident, Token};
+use syn::parse_macro_input;
 
-struct IdentifierArray {
-    identifiers: Punctuated<Ident, Token![,]>,
-}
-
-impl Parse for IdentifierArray {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let identifiers = Punctuated::<Ident, Token![,]>::parse_terminated(input)?;
-        Ok(IdentifierArray { identifiers })
-    }
-}
+mod util;
 
 #[proc_macro]
 pub fn make_keywords(input: TokenStream) -> TokenStream {
@@ -19,6 +12,7 @@ pub fn make_keywords(input: TokenStream) -> TokenStream {
         identifiers: keywords,
     } = parse_macro_input!(input as IdentifierArray);
 
+    // Start - Enum Creation
     let keyword_variants = keywords.iter().map(|x| {
         quote! {
             #x
@@ -30,7 +24,9 @@ pub fn make_keywords(input: TokenStream) -> TokenStream {
             #(#keyword_variants),*
         }
     };
+    // End - Enum Creation
 
+    // Start - Mapping Function
     let mapping_arms = keywords.iter().map(|x| {
         let identifier_string = x.to_string().to_lowercase();
         quote! {
@@ -48,6 +44,7 @@ pub fn make_keywords(input: TokenStream) -> TokenStream {
             }
         }
     };
+    // End - Mapping Function
 
     let expanded = quote! {
         #keyword_enum
