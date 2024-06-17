@@ -5,6 +5,7 @@ use crate::error::{
     UnknownNumericSuffixError,
 };
 use shark_core::source::SourcePosition;
+use shark_macro::make_keywords;
 
 /// Represents a token produced during lexical analysis. [LexerToken]s give more meaning to the
 /// source code because each token resembles are certain concept in the language such as a keyword,
@@ -151,26 +152,10 @@ impl TokenKind {
     }
 }
 
-make_keywords!(Else,
-               Enum,
-               For,
-               Fun,
-               If,
-               In,
-               Let,
-               Mut,
-               Of,
-               Ptr,
-               Pub,
-               Ref,
-               Ret,
-               Trait,
-               Type,
-               Unsafe,
-               Use,
-               When,
-               Where,
-               Yield);
+make_keywords!(
+    Else, Enum, For, Fun, If, In, Let, Mut, Of, Ptr, Pub, Ref, Ret, Trait, Type, Unsafe, Use, When,
+    Where, Yield
+);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LiteralKind {

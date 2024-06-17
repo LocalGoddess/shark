@@ -6,3 +6,4 @@ edition.workspace = true
 
 [dependencies]
 shark-core = { path = "../shark-core" }
+shark-macro = { path = "../shark-macro" }

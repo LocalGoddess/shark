@@ -53,25 +53,3 @@ macro_rules! encode_characters {
         result
     }};
 }
-
-macro_rules! make_keywords {
-    () => {};
-
-    ($($arg:ident), *) => {
-        #[derive(Debug, Clone, PartialEq)]
-        pub enum KeywordKind {
-            $($arg),*    
-        }
-        
-        impl KeywordKind {
-            pub fn create_keyword(identifier: &str) -> Option<Self> {
-                match identifier.to_ascii_lowercase().as_str() {
-                    $(
-                        hack if hack == stringify!($arg).to_ascii_lowercase() => Some(KeywordKind::$arg), // HACK!
-                    )*
-                    _ => None,
-                }
-            }
-        }
-    }
-}
