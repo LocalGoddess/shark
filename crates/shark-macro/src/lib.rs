@@ -6,6 +6,11 @@ use syn::parse_macro_input;
 
 mod util;
 
+/// Programatically creates an enum with the provided keywords then creates a function mapping a
+/// stringified version of said keyword to the enum
+///
+/// For example: The input `Fun` would map to `"fun" => KeywordKind::Fun`
+/// This macro should only be used once
 #[proc_macro]
 pub fn make_keywords(input: TokenStream) -> TokenStream {
     let IdentifierArray {
