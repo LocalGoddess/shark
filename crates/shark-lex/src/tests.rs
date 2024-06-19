@@ -40,6 +40,15 @@ fn test_keyword() {
 }
 
 #[test]
+fn test_keyword_again() {
+    let mut lexer = Lexer::new(None, "FUN");
+    lexer.lex();
+
+    let expected_tokens = vec![TokenKind::Identifier(String::from("FUN"))];
+    assert!(verify_tokens(&lexer.completed_tokens, &expected_tokens));
+}
+
+#[test]
 fn test_literal_str() {
     let mut lexer = Lexer::new(None, "\"Hello, World\"");
     lexer.lex();
